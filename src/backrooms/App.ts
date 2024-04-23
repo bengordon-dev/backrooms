@@ -16,8 +16,8 @@ import { Tile } from "./Tile.js";
 import { Chunk, ChunkLoader } from "./Chunk.js";
 import { FloorChunk, FloorChunkLoader } from "./FloorChunk.js";
 
-const CHUNK_RADIUS: number = 2; // vary as needed to see more chunks, I like 2 best. Significant performance implications
-const TILE_SIZE: number = 2;
+const CHUNK_RADIUS: number = 1; // vary as needed to see more chunks, I like 2 best. Significant performance implications
+const TILE_SIZE: number = 8;
 
 export class BackroomsAnimation extends CanvasAnimation {
   private gui: GUI;

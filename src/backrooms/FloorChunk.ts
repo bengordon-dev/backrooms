@@ -120,8 +120,8 @@ export class FloorChunk {
         let trNoise = whiteNoise(topRight, this.settings.seed)
         let blNoise = whiteNoise(bottomLeft, this.settings.seed)
         let brNoise = whiteNoise(bottomRight, this.settings.seed)
-        let xFrac = (tile[0] % gridSize) / (gridSize - 1)
-        let yFrac = (tile[1] % gridSize) / (gridSize - 1)
+        let xFrac = negativeMod(tile[0], gridSize) / (gridSize - 1)
+        let yFrac = negativeMod(tile[1], gridSize) / (gridSize - 1)
         let t = tlNoise * (1 - xFrac) + trNoise * xFrac
         let b = blNoise * (1 - xFrac) + brNoise * xFrac
         return t * (1 - yFrac) + b * yFrac
@@ -142,7 +142,7 @@ export class FloorChunk {
                 this.tilePositionsF32[4*idx + 1] = this.settings.y
                 this.tilePositionsF32[4*idx + 2] = z
                 this.tilePositionsF32[4*idx + 3] = 0;
-                this.tileRoomIDs[idx] = Math.floor(this.valueNoise([x, z], this.settings.tileSize * 16) * 4)
+                this.tileRoomIDs[idx] = Math.floor(this.valueNoise([x, z], this.settings.tileSize * 8) * 4)
             }
         }
     }

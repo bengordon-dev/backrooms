@@ -23,7 +23,7 @@ interface IGUI {
 
 export class GUI implements IGUI {
   private static readonly rotationSpeed: number = 0.01;
-  private static readonly walkSpeed: number = 0.5;
+  private static readonly walkSpeed: number = 0.25;
   private static readonly rollSpeed: number = 0.1;
   private static readonly panSpeed: number = 0.1;
 
@@ -153,7 +153,7 @@ export class GUI implements IGUI {
       answer.y = 0;
       answer.normalize()
       // penalize looking straight down
-      answer.scale(GUI.walkSpeed * Math.sqrt(1 - Math.abs(Vec3.dot(this.camera.forward(), new Vec3([0, 1, 0])))));
+      answer.scale(GUI.walkSpeed * Math.sqrt(Math.max(0.001, 1 - Math.abs(Vec3.dot(this.camera.forward(), new Vec3([0, 1, 0]))))));
       return answer;
   }
   

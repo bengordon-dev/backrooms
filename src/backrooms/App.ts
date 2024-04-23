@@ -212,7 +212,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       //TODO: If the player is not already in the lair, launch them upwards at 10 units/sec.
     if (this.onFloor) {
       
-      this.upVelocity += .3
+      this.upVelocity += .4
     }
   }
 }

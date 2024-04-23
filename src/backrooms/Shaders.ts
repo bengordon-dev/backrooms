@@ -123,26 +123,28 @@ export const blankTileVSText = `
     uniform vec4 uLightPos;    
     uniform mat4 uView;
     uniform mat4 uProj;
+    uniform float tileSize;
     
     attribute vec4 aNorm;
     attribute vec4 aVertPos;
     attribute vec4 aOffset;
     attribute vec2 aUV;
-    attribute float blockType;
+    attribute float aRoomID;
     
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 tileOffset;
-    varying float fBlockType;
+    varying float roomID;
 
     void main () {
-        gl_Position = uProj * uView * (aVertPos + aOffset);
-        wsPos = aVertPos + aOffset;
+        vec4 scaledVertPos = vec4(aVertPos.x * tileSize, aVertPos.y, aVertPos.z * tileSize, aVertPos.w);
+        gl_Position = uProj * uView * (scaledVertPos + aOffset);
+        wsPos = scaledVertPos + aOffset;
         normal = normalize(aNorm);
         uv = aUV;
         tileOffset = aOffset;
-        fBlockType = blockType;
+        roomID = aRoomID;
     }
 `;
 
@@ -156,7 +158,7 @@ export const blankTileFSText = `
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 tileOffset;
-    varying float fBlockType;
+    varying float roomID;
 
     float random (in vec2 pt, in float seed) {
         return fract(sin(seed + dot(pt.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -213,6 +215,13 @@ export const blankTileFSText = `
         vec2 xz = vec2(wsPos.x, wsPos.z);
         float perlinVal = perlinOctave(xz); 
         vec3 kd = vec3(0.7, 0.7, 0.0);
+        if (roomID == 3.0) {
+            kd = vec3(0.7, 0.0, 0.7);
+        } else if (roomID == 2.0) {
+            kd = vec3(0.0, 0.7, 0.7);
+        } else if (roomID == 1.0) {
+            kd = vec3(0.7, 0.0, 0.0);
+        }
         vec3 ka = vec3(0.1, 0.1, 0.1);
         vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
         vec4 lightDirection = uLightPos - wsPos;

@@ -14,14 +14,14 @@ import { Camera } from "../lib/webglutils/Camera.js";
 import { Cube } from "./Cube.js";
 import { Tile } from "./Tile.js";
 import { Chunk, ChunkLoader } from "./Chunk.js";
-import { FloorChunk } from "./FloorChunk.js";
+import { FloorChunk, FloorChunkLoader } from "./FloorChunk.js";
 
-const CHUNK_RADIUS: number = 1; // vary as needed to see more chunks, I like 2 best. Significant performance implications
+const CHUNK_RADIUS: number = 2; // vary as needed to see more chunks, I like 2 best. Significant performance implications
+const TILE_SIZE: number = 2;
 
 export class BackroomsAnimation extends CanvasAnimation {
   private gui: GUI;
-  
-  floorChunk : FloorChunk
+  floorChunkLoader: FloorChunkLoader
   
   /*  Tile Rendering */
   private tileGeometry: Tile;
@@ -54,7 +54,8 @@ export class BackroomsAnimation extends CanvasAnimation {
     
     // Generate initial landscape.
     // chunk size: 64, radius of chunks around player: 2, seed = 55, max height = 75
-    this.floorChunk = new FloorChunk(0, 0, 70, 64)
+    const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: 70}
+    this.floorChunkLoader = new FloorChunkLoader(0, 0, CHUNK_RADIUS, chunkSettings)
     
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
     this.tileGeometry = new Tile();
@@ -118,6 +119,16 @@ export class BackroomsAnimation extends CanvasAnimation {
       new Float32Array(0)
     );
 
+    this.blankTileRenderPass.addInstancedAttribute("aRoomID",
+      1,
+      this.ctx.FLOAT,
+      false,
+      Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array(0)
+    )
+
     this.blankTileRenderPass.addUniform("uLightPos",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform4fv(loc, this.lightPosition.xyzw);
@@ -130,6 +141,11 @@ export class BackroomsAnimation extends CanvasAnimation {
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
     });
+    this.blankTileRenderPass.addUniform("tileSize",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        //gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
+        gl.uniform1f(loc, TILE_SIZE)
+    });
     
     this.blankTileRenderPass.setDrawData(this.ctx.TRIANGLES, this.tileGeometry.indicesFlat().length, this.ctx.UNSIGNED_INT, 0);
     this.blankTileRenderPass.setup();    
@@ -138,7 +154,7 @@ export class BackroomsAnimation extends CanvasAnimation {
 
   private updateXZ(walkDir: Vec3): void {
     let newPos = this.playerPosition.copy().add(walkDir)
-    if (this.floorChunk.height(new Vec2([newPos.x, newPos.z])) <= this.playerPosition.y - 2) {
+    if (this.floorChunkLoader.height() <= this.playerPosition.y - 2) {
       this.playerPosition.add(walkDir)
     } 
   }
@@ -147,14 +163,14 @@ export class BackroomsAnimation extends CanvasAnimation {
   private updateY(): void {
     this.upVelocity -= .098/10
     let newPlayerPos = new Vec3([this.playerPosition.x, this.playerPosition.y + this.upVelocity, this.playerPosition.z])
-    const floorY = this.floorChunk.height(new Vec2([this.playerPosition.x, this.playerPosition.z]))
+    const floorY = this.floorChunkLoader.height()
     this.onFloor = newPlayerPos.y - 2 <= floorY
     if (this.onFloor) {
       newPlayerPos.y = floorY + 2
       this.upVelocity = 0
     }
     this.playerPosition = newPlayerPos
-    console.log(this.playerPosition.y)
+    //console.log(this.playerPosition.y)
   }
 
   /**
@@ -191,15 +207,15 @@ export class BackroomsAnimation extends CanvasAnimation {
     const gl: WebGLRenderingContext = this.ctx;
     gl.viewport(x, y, width, height);
 
-    this.blankTileRenderPass.updateAttributeBuffer("aOffset", this.floorChunk.tilePositions());
-    this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());    
+    // this.blankTileRenderPass.updateAttributeBuffer("aOffset", this.floorChunk.tilePositions());
+    // this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());    
     //TODO: Render multiple chunks around the player, using Perlin noise shaders
-    /*this.chunkLoader.getChunks().forEach(chunk => {
+    this.floorChunkLoader.getChunks().forEach(chunk => {
       
-      this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.cubePositions());
-      this.blankTileRenderPass.updateAttributeBuffer("blockType", chunk.getBlockTypes());
+      this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositions());
+      this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.getRoomIDs());
       this.blankTileRenderPass.drawInstanced(chunk.numTiles());    
-    });*/
+    });
 
   }
 

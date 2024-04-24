@@ -18,35 +18,35 @@ export class Cube {
 
     this.positionsRay = [
       /* Top */
-      new Vec4([-0.5, 0.5, -0.5, 1.0]),
-      new Vec4([-0.5, 0.5, 0.5, 1.0]),
-      new Vec4([0.5, 0.5, 0.5, 1.0]),
-      new Vec4([0.5, 0.5, -0.5, 1.0]),
+      new Vec4([0, 1, 0, 1]),
+      new Vec4([0, 1, 1, 1]),
+      new Vec4([1, 1, 1, 1]),
+      new Vec4([1, 1, 0, 1]),
       /* Left */
-      new Vec4([-0.5, 0.5, 0.5, 1.0]),
-      new Vec4([-0.5, -0.5, 0.5, 1.0]),
-      new Vec4([-0.5, -0.5, -0.5, 1.0]),
-      new Vec4([-0.5, 0.5, -0.5, 1.0]),
+      new Vec4([0, 1, 1, 1]),
+      new Vec4([0, 0, 1, 1]),
+      new Vec4([0, 0, 0, 1]),
+      new Vec4([0, 1, 0, 1]),
       /* Right */
-      new Vec4([0.5, 0.5, 0.5, 1.0]),
-      new Vec4([0.5, -0.5, 0.5, 1.0]),
-      new Vec4([0.5, -0.5, -0.5, 1.0]),
-      new Vec4([0.5, 0.5, -0.5, 1.0]),
+      new Vec4([1, 1, 1, 1]),
+      new Vec4([1, 0, 1, 1]),
+      new Vec4([1, 0, 0, 1]),
+      new Vec4([1, 1, 0, 1]),
       /* Front */
-      new Vec4([0.5, 0.5, 0.5, 1.0]),
-      new Vec4([0.5, -0.5, 0.5, 1.0]),
-      new Vec4([-0.5, -0.5, 0.5, 1.0]),
-      new Vec4([-0.5, 0.5, 0.5, 1.0]),
+      new Vec4([1, 1, 1, 1]),
+      new Vec4([1, 0, 1, 1]),
+      new Vec4([0, 0, 1, 1]),
+      new Vec4([0, 1, 1, 1]),
       /* Back */
-      new Vec4([0.5, 0.5, -0.5, 1.0]),
-      new Vec4([0.5, -0.5, -0.5, 1.0]),
-      new Vec4([-0.5, -0.5, -0.5, 1.0]),
-      new Vec4([-0.5, 0.5, -0.5, 1.0]),
+      new Vec4([1, 1, 0, 1]),
+      new Vec4([1, 0, 0, 1]),
+      new Vec4([0, 0, 0, 1]),
+      new Vec4([0, 1, 0, 1]),
       /* Bottom */
-      new Vec4([-0.5, -0.5, -0.5, 1.0]),
-      new Vec4([-0.5, -0.5, 0.5, 1.0]),
-      new Vec4([0.5, -0.5, 0.5, 1.0]),
-      new Vec4([0.5, -0.5, -0.5, 1.0])
+      new Vec4([0, 0, 0, 1]),
+      new Vec4([0, 0, 1, 1]),
+      new Vec4([1, 0, 1, 1]),
+      new Vec4([1, 0, 0, 1]),
     ];
     console.assert(this.positionsRay != null);
     console.assert(this.positionsRay.length === 4 * 6);
@@ -157,7 +157,7 @@ export class Cube {
       new Vec3([0.0, 0.0, 0.0]),
       new Vec3([0.0, 1.0, 0.0]),
       new Vec3([1.0, 1.0, 0.0]),
-      new Vec3([1.0, 0.0, 0.0]),      
+      new Vec3([1.0, 0.0, 0.0]),
     ];
     console.assert(this.uvRay != null);
     console.assert(this.uvRay.length === 4 * 6);
@@ -192,7 +192,7 @@ export class Cube {
   public normalsFlat(): Float32Array {
     return this.normalsF32;
   }
-  
+
   public uvFlat() : Float32Array {
     return this.uvF32;
   }

@@ -5,6 +5,8 @@ import {
 } from "../lib/webglutils/CanvasAnimation.js";
 import { GUI } from "./Gui.js";
 import {
+  blankCubeFSText,
+  blankCubeVSText,
   blankTileFSText,
   blankTileVSText
 } from "./Shaders.js";
@@ -22,61 +24,64 @@ const TILE_SIZE: number = 8;
 export class BackroomsAnimation extends CanvasAnimation {
   private gui: GUI;
   floorChunkLoader: FloorChunkLoader
-  
+
   /*  Tile Rendering */
   private tileGeometry: Tile;
   private blankTileRenderPass: RenderPass;
+
+  private wallGeometry: Cube;
+  private wallRenderPass: RenderPass;
 
   /* Global Rendering Info */
   private lightPosition: Vec4;
   private backgroundColor: Vec4;
 
   private canvas2d: HTMLCanvasElement;
-  
+
   // Player's head position in world coordinate.
   // Player should extend two units down from this location, and 0.4 units radially.
   private playerPosition: Vec3;
   public upVelocity: number; // gravity/jumping
   public onFloor: boolean
-  
+
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
 
     this.canvas2d = document.getElementById("textCanvas") as HTMLCanvasElement;
-  
+
     this.ctx = Debugger.makeDebugContext(this.ctx);
     let gl = this.ctx;
-        
+
     this.gui = new GUI(this.canvas2d, this);
     this.playerPosition = this.gui.getCamera().pos();
     this.upVelocity = 0
     this.onFloor = false
-    
+
     // Generate initial landscape.
     // chunk size: 64, radius of chunks around player: 2, seed = 55, max height = 75
     const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: 70}
     this.floorChunkLoader = new FloorChunkLoader(0, 0, CHUNK_RADIUS, chunkSettings)
-    
+
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
     this.tileGeometry = new Tile();
     this.initBlankTile();
-    
+
+    this.wallRenderPass = new RenderPass(gl, blankCubeVSText, blankCubeFSText);
+    this.wallGeometry = new Cube();
+    this.initWalls();
+
     this.lightPosition = new Vec4([-1000, 1000, -1000, 1]);
-    this.backgroundColor = new Vec4([0.0, 0.37254903, 0.37254903, 1.0]);    
+    this.backgroundColor = new Vec4([0.0, 0.37254903, 0.37254903, 1.0]);
   }
 
   /**
    * Setup the simulation. This can be called again to reset the program.
    */
-  public reset(): void {    
+  public reset(): void {
     this.gui.reset();
     this.playerPosition = this.gui.getCamera().pos();
   }
-  
-  
-  /**
-   * Sets up the blank cube drawing
-   */
+
   private initBlankTile(): void {
     this.blankTileRenderPass.setIndexBufferData(this.tileGeometry.indicesFlat());
     this.blankTileRenderPass.addAttribute("aVertPos",
@@ -88,7 +93,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       undefined,
       this.tileGeometry.positionsFlat()
     );
-    
+
     this.blankTileRenderPass.addAttribute("aNorm",
       4,
       this.ctx.FLOAT,
@@ -98,7 +103,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       undefined,
       this.tileGeometry.normalsFlat()
     );
-    
+
     this.blankTileRenderPass.addAttribute("aUV",
       2,
       this.ctx.FLOAT,
@@ -108,7 +113,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       undefined,
       this.tileGeometry.uvFlat()
     );
-    
+
     this.blankTileRenderPass.addInstancedAttribute("aOffset",
       4,
       this.ctx.FLOAT,
@@ -146,17 +151,87 @@ export class BackroomsAnimation extends CanvasAnimation {
         //gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
         gl.uniform1f(loc, TILE_SIZE)
     });
-    
+
     this.blankTileRenderPass.setDrawData(this.ctx.TRIANGLES, this.tileGeometry.indicesFlat().length, this.ctx.UNSIGNED_INT, 0);
-    this.blankTileRenderPass.setup();    
+    this.blankTileRenderPass.setup();
   }
+
+  private initWalls(): void {
+    this.wallRenderPass.setIndexBufferData(this.wallGeometry.indicesFlat());
+    this.wallRenderPass.addAttribute("aVertPos",
+      4,
+      this.ctx.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      this.wallGeometry.positionsFlat()
+    );
+
+    this.wallRenderPass.addAttribute("aNorm",
+      4,
+      this.ctx.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      this.wallGeometry.normalsFlat()
+    );
+
+    this.wallRenderPass.addAttribute("aUV",
+      2,
+      this.ctx.FLOAT,
+      false,
+      2 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      this.wallGeometry.uvFlat()
+    );
+
+    this.wallRenderPass.addInstancedAttribute("aOffset",
+      4,
+      this.ctx.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array(0)
+    );
+
+    this.wallRenderPass.addInstancedAttribute("aScale",
+      4,
+      this.ctx.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array(0)
+    );
+
+    this.wallRenderPass.addUniform("uLightPos",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform4fv(loc, this.lightPosition.xyzw);
+    });
+    this.wallRenderPass.addUniform("uProj",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.projMatrix().all()));
+    });
+    this.wallRenderPass.addUniform("uView",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
+    });
+
+    this.wallRenderPass.setDrawData(this.ctx.TRIANGLES, this.wallGeometry.indicesFlat().length, this.ctx.UNSIGNED_INT, 0);
+    this.wallRenderPass.setup();
+  }
+
 
 
   private updateXZ(walkDir: Vec3): void {
     let newPos = this.playerPosition.copy().add(walkDir)
     if (this.floorChunkLoader.height() <= this.playerPosition.y - 2) {
       this.playerPosition.add(walkDir)
-    } 
+    }
   }
 
 
@@ -188,7 +263,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     this.updateY()
     this.gui.getCamera().setPos(this.playerPosition);
     //this.chunkLoader.loadAfterMovement(this.playerPosition.x, this.playerPosition.z)
-    
+
     // Drawing
     const gl: WebGLRenderingContext = this.ctx;
     const bg: Vec4 = this.backgroundColor;
@@ -200,7 +275,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     gl.cullFace(gl.BACK);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); // null is the default frame buffer
-    this.drawScene(0, 0, 1280, 960);        
+    this.drawScene(0, 0, 1280, 960);
   }
 
   private drawScene(x: number, y: number, width: number, height: number): void {
@@ -208,26 +283,29 @@ export class BackroomsAnimation extends CanvasAnimation {
     gl.viewport(x, y, width, height);
 
     // this.blankTileRenderPass.updateAttributeBuffer("aOffset", this.floorChunk.tilePositions());
-    // this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());    
+    // this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());
     //TODO: Render multiple chunks around the player, using Perlin noise shaders
     this.floorChunkLoader.getChunks().forEach(chunk => {
-      
+
       this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositions());
       this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.getRoomIDs());
-      this.blankTileRenderPass.drawInstanced(chunk.numTiles());    
+      this.blankTileRenderPass.drawInstanced(chunk.numTiles());
     });
 
+    this.wallRenderPass.updateAttributeBuffer("aOffset", new Float32Array([0, 71, 0, 0, 0, 71, 10, 0]));
+    this.wallRenderPass.updateAttributeBuffer("aScale", new Float32Array([1, 1, 1, 1, 3, 3, 3, 1]));
+    this.wallRenderPass.drawInstanced(2);
   }
 
   public getGUI(): GUI {
     return this.gui;
-  }  
-  
-  
+  }
+
+
   public jump() {
       //TODO: If the player is not already in the lair, launch them upwards at 10 units/sec.
     if (this.onFloor) {
-      
+
       this.upVelocity += .4
     }
   }
@@ -237,5 +315,5 @@ export function initializeCanvas(): void {
   const canvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   /* Start drawing */
   const canvasAnimation: BackroomsAnimation = new BackroomsAnimation(canvas);
-  canvasAnimation.start();  
+  canvasAnimation.start();
 }

@@ -1,16 +1,17 @@
 export const blankCubeVSText = `
     precision mediump float;
 
-    uniform vec4 uLightPos;    
+    uniform vec4 uLightPos;
     uniform mat4 uView;
     uniform mat4 uProj;
-    
+
     attribute vec4 aNorm;
     attribute vec4 aVertPos;
     attribute vec4 aOffset;
+    attribute vec4 aScale;
     attribute vec2 aUV;
     attribute float blockType;
-    
+
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
@@ -18,8 +19,8 @@ export const blankCubeVSText = `
     varying float fBlockType;
 
     void main () {
-        gl_Position = uProj * uView * (aVertPos + aOffset);
-        wsPos = aVertPos + aOffset;
+        gl_Position = uProj * uView * (aVertPos * aScale + aOffset);
+        wsPos = aVertPos * aScale + aOffset;
         normal = normalize(aNorm);
         uv = aUV;
         blockOffset = aOffset;
@@ -31,7 +32,6 @@ export const blankCubeFSText = `
     precision mediump float;
 
     uniform vec4 uLightPos;
-
 
     varying vec4 normal;
     varying vec4 wsPos;
@@ -75,21 +75,21 @@ export const blankCubeFSText = `
         float top = smoothmix(dDot, cDot, mod(uvCoords.x, gridSize)/gridSize);
         return smoothmix(bottom, top, mod(uvCoords.y, gridSize)/gridSize)*0.5 + 0.5;
     }
-        
+
     float perlinOctave(vec2 uvCoords, in float seed) {
         return (0.5 * perlin(uvCoords, 1.0, seed)
             + 0.25 * perlin(uvCoords, 0.5, seed)
             + 0.25 * perlin(uvCoords, 0.25, seed));
 
     }
-  
+
     vec2 blockID() {
         return vec2(blockOffset.x, blockOffset.z);
     }
-    
+
     void main() {
         float seed = random(blockID(), 0.0);
-        float perlinVal = perlinOctave(uv, seed); 
+        float perlinVal = perlinOctave(uv, seed);
         vec3 kd = vec3(0.9, 0.9, 0.9);
         if (fBlockType == 3.0) {
             kd = vec3(1.0, 1.0, 1.0);
@@ -105,13 +105,24 @@ export const blankCubeFSText = `
         vec4 lightDirection = uLightPos - wsPos;
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
-	
+
         if (fBlockType == 3.0) {
             gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.88 + noise*.12, 1.0);
         } else if (fBlockType == 0.0) {
             gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.76 + noise*.24, 1.0);
         } else {
             gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*noise, 1.0);
+        }
+
+        vec4 base = vec4(0.84, 0.84, 0.49, 1.0);
+        vec4 stripes = vec4(0.75, 0.75, 0.44, 1.0);
+
+        if (normal.z != 0.0) {
+            gl_FragColor = (mod(wsPos.x, 0.1) < 0.025) ? stripes : base;
+        } else if (normal.x != 0.0) {
+            gl_FragColor = (mod(wsPos.z, 0.1) < 0.025) ? stripes : base;
+        } else {
+            gl_FragColor = base;
         }
     }
 `;
@@ -120,17 +131,17 @@ export const blankCubeFSText = `
 export const blankTileVSText = `
     precision mediump float;
 
-    uniform vec4 uLightPos;    
+    uniform vec4 uLightPos;
     uniform mat4 uView;
     uniform mat4 uProj;
     uniform float tileSize;
-    
+
     attribute vec4 aNorm;
     attribute vec4 aVertPos;
     attribute vec4 aOffset;
     attribute vec2 aUV;
     attribute float aRoomID;
-    
+
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
@@ -197,7 +208,7 @@ export const blankTileFSText = `
         float mix = top * (1.0 - fraction.y) + bottom * fraction.y;        //smoothmix(bottom, top, mod(fraction.y, gridSize)/gridSize)*0.5 + 0.5;
         return mix * 0.5 + 0.5;
     }
-        
+
     float perlinOctave(vec2 xzCoords) {
         return (0.5 * perlin(xzCoords, 1.0)
             + 0.25 * perlin(xzCoords, 0.5)
@@ -205,15 +216,15 @@ export const blankTileFSText = `
             + 0.0625 * perlin(xzCoords, 0.125));
 
     }
-  
+
     vec2 tileID() {
         return vec2(tileOffset.x, tileOffset.z);
     }
-    
+
     void main() {
         //float seed = 0.0; // random(tileID(), 0.0);
         vec2 xz = vec2(wsPos.x, wsPos.z);
-        float perlinVal = perlinOctave(xz); 
+        float perlinVal = perlinOctave(xz);
         vec3 kd = vec3(0.7, 0.7, 0.0);
         if (roomID == 3.0) {
             kd = vec3(0.7, 0.0, 0.7);
@@ -228,7 +239,6 @@ export const blankTileFSText = `
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
         gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
-        
+
     }
 `;
-

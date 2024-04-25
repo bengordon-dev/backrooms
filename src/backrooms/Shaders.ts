@@ -239,6 +239,6 @@ export const blankTileFSText = `
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
         gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
-
+        gl_FragColor = vec4(0.69, 0.61, 0.40, 1.0);
     }
 `;

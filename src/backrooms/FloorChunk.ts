@@ -16,8 +16,16 @@ function roundDown(x: number, n: number) : number {
     return x - negativeMod(x, n)
 }
 
-function whiteNoise(tile: [number, number], seed: number) {
+function whiteNoise(tile: [number, number], seed: number): number {
     return negativeMod((Math.sin(tile[0] * 12.9898 + tile[1] * 78.233 + seed) + 1) * 43758.5453, 1)
+}
+
+function smoothmix(a0 : number, a1: number, w: number): number {
+    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
+}
+
+function regmix(a0: number, a1: number, w: number) : number {
+    return a0 * (1 - w) + a1 * w
 }
 
 
@@ -77,6 +85,7 @@ export class FloorChunk {
         this.tiles = this.settings.size*this.settings.size;  
         this.length = this.settings.size * this.settings.tileSize 
         this.generateTiles();
+        this.smoothRooms()
     }
     // source: https://www.youtube.com/watch?v=KllOFoUnKhU
     private static whiteNoise(block: [number, number], seed: number) {
@@ -107,10 +116,14 @@ export class FloorChunk {
         return this.settings.y
     }
 
-    private valueNoise(tile: [number, number], gridSize: number): number {
+    private valueNoise(tile: [number, number], gridSize: number, alignSize: number): number {
+        const alignedTile: [number, number] = [
+            roundDown(tile[0], alignSize),
+            roundDown(tile[1], alignSize) 
+        ]
         const topLeft: [number, number] = [
-            roundDown(tile[0], gridSize),
-            roundDown(tile[1], gridSize) 
+            roundDown(alignedTile[0], gridSize),
+            roundDown(alignedTile[1], gridSize) 
         ]
         const topRight: [number, number] = [topLeft[0] + gridSize, topLeft[1]]
         const bottomLeft: [number, number] = [topLeft[0], topLeft[1] + gridSize]
@@ -120,11 +133,16 @@ export class FloorChunk {
         let trNoise = whiteNoise(topRight, this.settings.seed)
         let blNoise = whiteNoise(bottomLeft, this.settings.seed)
         let brNoise = whiteNoise(bottomRight, this.settings.seed)
-        let xFrac = negativeMod(tile[0], gridSize) / (gridSize - 1)
-        let yFrac = negativeMod(tile[1], gridSize) / (gridSize - 1)
-        let t = tlNoise * (1 - xFrac) + trNoise * xFrac
-        let b = blNoise * (1 - xFrac) + brNoise * xFrac
-        return t * (1 - yFrac) + b * yFrac
+        let xFrac = negativeMod(alignedTile[0], gridSize) / (gridSize - 1)
+        let yFrac = negativeMod(alignedTile[1], gridSize) / (gridSize - 1)
+        let t = regmix(tlNoise, trNoise, xFrac) //tlNoise * (1 - xFrac) + trNoise * xFrac
+        let b = regmix(blNoise, brNoise, xFrac)//blNoise * (1 - xFrac) + brNoise * xFrac
+        return regmix(t, b, yFrac)
+        //return t * (1 - yFrac) + b * yFrac
+    }
+
+    private roomNoise(x: number, z: number) {
+        return Math.floor(this.valueNoise([x, z], this.settings.tileSize * 3, this.settings.tileSize) * 2)
     }
 
 
@@ -142,7 +160,34 @@ export class FloorChunk {
                 this.tilePositionsF32[4*idx + 1] = this.settings.y
                 this.tilePositionsF32[4*idx + 2] = z
                 this.tilePositionsF32[4*idx + 3] = 0;
-                this.tileRoomIDs[idx] = Math.floor(this.valueNoise([x, z], this.settings.tileSize * 8) * 4)
+                this.tileRoomIDs[idx] = this.roomNoise(x, z)
+            }
+        }
+    }
+
+    private smoothRooms(rounds=1) {
+        const topleftx = this.minX()
+        const toplefty = this.minZ()
+    
+
+        for (let i = 0; i < this.settings.size; i++) {
+            for (let j = 0; j < this.settings.size; j++) {
+                const x = topleftx + j * this.settings.tileSize;
+                const z = toplefty + i * this.settings.tileSize;
+                const idx = this.settings.size * i + j;
+                const neighbors = [
+                    this.roomNoise(x + this.settings.tileSize, z),
+                    this.roomNoise(x, z + this.settings.tileSize),
+                    this.roomNoise(x - this.settings.tileSize, z),
+                    this.roomNoise(x, z - this.settings.tileSize)
+                ]
+                let disagreements = neighbors.map(e => this.tileRoomIDs[idx] === e ? 0 : 1)
+                let sum: number = disagreements[0] + disagreements[1] + disagreements[2] + disagreements[3] 
+                //console.log(sum)
+                if (sum >= 2 && this.tileRoomIDs[idx] === 1) {
+
+                    this.tileRoomIDs[idx] = 1 - this.tileRoomIDs[idx]
+                }
             }
         }
     }

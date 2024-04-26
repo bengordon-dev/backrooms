@@ -286,13 +286,16 @@ export class BackroomsAnimation extends CanvasAnimation {
     // this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());
     //TODO: Render multiple chunks around the player, using Perlin noise shaders
     this.floorChunkLoader.getChunks().forEach(chunk => {
-
-      this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositions());
-      this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.getRoomIDs());
-      this.blankTileRenderPass.drawInstanced(chunk.numTiles());
+      //chunk.rooms.forEach(room => {
+      this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositionsF32);
+      this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
+      this.blankTileRenderPass.drawInstanced(chunk.tiles);
       this.wallRenderPass.updateAttributeBuffer("aOffset", chunk.wallPositions);
       this.wallRenderPass.updateAttributeBuffer("aScale", chunk.wallScales);
       this.wallRenderPass.drawInstanced(chunk.wallPositions.length / 4);
+      //})
+
+     
     });
   }
 

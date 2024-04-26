@@ -273,12 +273,15 @@ class RoomTreeNode {
         if (this.isLeaf()) {
             rooms.push(new Room(this.minCorner, this.maxCorner, this.settings))
         } else {
+            const adj = this.settings.tileSize / 2
             if (this.dimension === DivisionDimension.X) { // left and right, vertical bar
-                wallOffsets.push(this.threshold! - 0.5, this.settings.y, this.minCorner[1] - 0.5, 0)
-                wallScales.push(1, 3, this.maxCorner[1] - this.minCorner[1], 1)
+                const length = this.maxCorner[1] - this.minCorner[1]
+                wallOffsets.push(this.threshold! - this.settings.tileSize/2, this.settings.y + 1.5, this.minCorner[1] + length / 2 - adj, 0)
+                wallScales.push(1, 3, length, 1)
             } else { // top and bottom, horizontal bar
-                wallOffsets.push(this.minCorner[0] - 0.5, this.settings.y, this.threshold! - 0.5, 0)
-                wallScales.push(this.maxCorner[0] - this.minCorner[0], 3, 1, 1)
+                const length = this.maxCorner[0] - this.minCorner[0]
+                wallOffsets.push(this.minCorner[0] + length / 2 - adj, this.settings.y + 1.5, this.threshold! - this.settings.tileSize/2, 0)
+                wallScales.push(length, 3, 1, 1)
             }
             this.left?.traverseHelper(rooms, wallOffsets, wallScales)
             this.right?.traverseHelper(rooms, wallOffsets, wallScales)
@@ -374,15 +377,19 @@ class Room {
     private generateTiles() {
         const topleftx = this.minCorner[0]
         const toplefty = this.minCorner[1]
-        const tiles = (this.maxCorner[0] - this.minCorner[0]) * (this.maxCorner[1] - this.minCorner[1])
+        const width = (this.maxCorner[0] - this.minCorner[0])/this.settings.tileSize
+        const height = (this.maxCorner[1] - this.minCorner[1])/this.settings.tileSize
+        console.log(width)
+        console.log(height)
+        const tiles = width * height
         this.tilePositionsF32 = new Float32Array(tiles * 4);
         this.tileBiomesF32 = new Float32Array(tiles)
-
-        const biome = Math.floor(valueNoise(this.minCorner, this.settings.tileSize, this.settings.seed) * 4)
-
-        for (let i = 0; i < this.settings.size; i++) {
-            for (let j = 0; j < this.settings.size; j++) {
-                const idx = this.settings.size * i + j;
+        const median: [number, number] = [(this.minCorner[0] + this.maxCorner[0])/2, (this.minCorner[1] + this.maxCorner[1])/2]
+        const biome = Math.floor(valueNoise(median, this.settings.tileSize, this.settings.seed) * 4)
+        //console.log(`median ${median} width ${width} height ${height} biome ${biome}`)
+        for (let i = 0; i < height; i++) {
+            for (let j = 0; j < width; j++) {
+                const idx = width * i + j;
                 const x = topleftx + j * this.settings.tileSize;
                 const z = toplefty + i * this.settings.tileSize;
                 this.tilePositionsF32[4*idx + 0] = x

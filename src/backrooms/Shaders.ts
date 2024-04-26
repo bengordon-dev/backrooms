@@ -88,31 +88,31 @@ export const blankCubeFSText = `
     }
 
     void main() {
-        float seed = random(blockID(), 0.0);
-        float perlinVal = perlinOctave(uv, seed);
-        vec3 kd = vec3(0.9, 0.9, 0.9);
-        if (fBlockType == 3.0) {
-            kd = vec3(1.0, 1.0, 1.0);
-        } else if (fBlockType == 1.0) {
-            kd = vec3(0.0, 1.0, 0.0);
-        } else if (fBlockType == 0.0) {
-            kd = vec3(0.8368627451, 0.6980392156862745, 0.5521568627);
-        }
-        vec3 ka = vec3(0.1, 0.1, 0.1);
-        vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
+        // float seed = random(blockID(), 0.0);
+        // float perlinVal = perlinOctave(uv, seed);
+        // vec3 kd = vec3(0.9, 0.9, 0.9);
+        // if (fBlockType == 3.0) {
+        //     kd = vec3(1.0, 1.0, 1.0);
+        // } else if (fBlockType == 1.0) {
+        //     kd = vec3(0.0, 1.0, 0.0);
+        // } else if (fBlockType == 0.0) {
+        //     kd = vec3(0.8368627451, 0.6980392156862745, 0.5521568627);
+        // }
+        // vec3 ka = vec3(0.1, 0.1, 0.1);
+        // vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
 
         /* Compute light fall off */
         vec4 lightDirection = uLightPos - wsPos;
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
 
-        if (fBlockType == 3.0) {
-            gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.88 + noise*.12, 1.0);
-        } else if (fBlockType == 0.0) {
-            gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.76 + noise*.24, 1.0);
-        } else {
-            gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*noise, 1.0);
-        }
+        // if (fBlockType == 3.0) {
+        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.88 + noise*.12, 1.0);
+        // } else if (fBlockType == 0.0) {
+        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.76 + noise*.24, 1.0);
+        // } else {
+        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*noise, 1.0);
+        // }
 
         vec4 base = vec4(0.84, 0.84, 0.49, 1.0);
         vec4 stripes = vec4(0.75, 0.75, 0.44, 1.0);

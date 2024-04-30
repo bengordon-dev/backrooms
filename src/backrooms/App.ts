@@ -15,11 +15,9 @@ import { RenderPass } from "../lib/webglutils/RenderPass.js";
 import { Camera } from "../lib/webglutils/Camera.js";
 import { Cube } from "./Cube.js";
 import { Tile } from "./Tile.js";
-import { Chunk, ChunkLoader } from "./Chunk.js";
 import { FloorChunk, FloorChunkLoader } from "./FloorChunk.js";
 import { Sound } from "./Sound.js";
 
-const CHUNK_RADIUS: number = 1; // vary as needed to see more chunks, I like 2 best. Significant performance implications
 const TILE_SIZE: number = 8;
 
 export class BackroomsAnimation extends CanvasAnimation {
@@ -61,7 +59,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     // Generate initial landscape.
     // chunk size: 64, radius of chunks around player: 2, seed = 55, max height = 75
     const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: 70}
-    this.floorChunkLoader = new FloorChunkLoader(0, 0, CHUNK_RADIUS, chunkSettings)
+    this.floorChunkLoader = new FloorChunkLoader(0, 0, chunkSettings)
 
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
     this.tileGeometry = new Tile();
@@ -265,7 +263,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     // scale for direction of head up/down, touching the ground
     this.updateY()
     this.gui.getCamera().setPos(this.playerPosition);
-    //this.chunkLoader.loadAfterMovement(this.playerPosition.x, this.playerPosition.z)
+    this.floorChunkLoader.loadAfterMovement(this.playerPosition.x, this.playerPosition.z)
 
     // Drawing
     const gl: WebGLRenderingContext = this.ctx;

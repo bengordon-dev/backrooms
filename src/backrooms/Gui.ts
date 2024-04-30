@@ -1,6 +1,6 @@
 import { Camera } from "../lib/webglutils/Camera.js";
 import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
-import { BackroomsAnimation } from "./App.js";
+import { BackroomsAnimation, START_HEIGHT } from "./App.js";
 import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
 
@@ -23,7 +23,7 @@ interface IGUI {
 
 export class GUI implements IGUI {
   private static readonly rotationSpeed: number = 0.01;
-  private static readonly walkSpeed: number = 1;
+  private static readonly walkSpeed: number = 0.5;
   private static readonly rollSpeed: number = 0.1;
   private static readonly panSpeed: number = 0.1;
 
@@ -66,8 +66,8 @@ export class GUI implements IGUI {
    */
   public reset(): void {
     this.camera = new Camera(
-      new Vec3([0, 100, 0]),
-      new Vec3([0, 100, -1]),
+      new Vec3([0, START_HEIGHT + 2, 0]),
+      new Vec3([0, START_HEIGHT + 2, -1]),
       new Vec3([0, 1, 0]),
       45,
       this.width / this.height,

@@ -19,6 +19,9 @@ import { FloorChunk, FloorChunkLoader } from "./FloorChunk.js";
 import { Sound } from "./Sound.js";
 
 const TILE_SIZE: number = 8;
+const JUMP_MAGNITUDE: number = 0.2
+const GRAVITY: number = .0098 * .75
+export const START_HEIGHT: number = 70
 
 export class BackroomsAnimation extends CanvasAnimation {
   private gui: GUI;
@@ -58,7 +61,7 @@ export class BackroomsAnimation extends CanvasAnimation {
 
     // Generate initial landscape.
     // chunk size: 64, radius of chunks around player: 2, seed = 55, max height = 75
-    const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: 70}
+    const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: START_HEIGHT}
     this.floorChunkLoader = new FloorChunkLoader(0, 0, chunkSettings)
 
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
@@ -237,7 +240,7 @@ export class BackroomsAnimation extends CanvasAnimation {
 
 
   private updateY(): void {
-    this.upVelocity -= .098/10
+    this.upVelocity -= GRAVITY
     let newPlayerPos = new Vec3([this.playerPosition.x, this.playerPosition.y + this.upVelocity, this.playerPosition.z])
     const floorY = this.floorChunkLoader.height()
     this.onFloor = newPlayerPos.y - 2 <= floorY
@@ -309,7 +312,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       //TODO: If the player is not already in the lair, launch them upwards at 10 units/sec.
     if (this.onFloor) {
 
-      this.upVelocity += .4
+      this.upVelocity += JUMP_MAGNITUDE
     }
   }
 }

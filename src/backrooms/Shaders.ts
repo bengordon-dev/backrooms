@@ -138,6 +138,7 @@ export const blankTileVSText = `
 
     attribute vec4 aNorm;
     attribute vec4 aVertPos;
+    attribute vec4 aScale;
     attribute vec4 aOffset;
     attribute vec2 aUV;
     attribute float aRoomID;
@@ -148,8 +149,8 @@ export const blankTileVSText = `
     varying vec4 tileOffset;
     varying float roomID;
 
-    void main () {
-        vec4 scaledVertPos = vec4(aVertPos.x * tileSize, aVertPos.y, aVertPos.z * tileSize, aVertPos.w);
+    void main () { 
+        vec4 scaledVertPos = vec4(aVertPos.x * tileSize * aScale.x, aVertPos.y, aVertPos.z * tileSize * aScale.z, aVertPos.w);
         gl_Position = uProj * uView * (scaledVertPos + aOffset);
         wsPos = scaledVertPos + aOffset;
         normal = normalize(aNorm);

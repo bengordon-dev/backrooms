@@ -124,6 +124,16 @@ export class BackroomsAnimation extends CanvasAnimation {
       new Float32Array(0)
     );
 
+    this.blankTileRenderPass.addInstancedAttribute("aScale",
+      4,
+      this.ctx.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array(0)
+    );
+
     this.blankTileRenderPass.addInstancedAttribute("aRoomID",
       1,
       this.ctx.FLOAT,
@@ -289,6 +299,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       //chunk.rooms.forEach(room => {
       this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositionsF32);
       this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
+      this.blankTileRenderPass.updateAttributeBuffer("aScale", chunk.tileScalesF32);
       this.blankTileRenderPass.drawInstanced(chunk.tiles);
       this.wallRenderPass.updateAttributeBuffer("aOffset", chunk.wallPositions);
       this.wallRenderPass.updateAttributeBuffer("aScale", chunk.wallScales);

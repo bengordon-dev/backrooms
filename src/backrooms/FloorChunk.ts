@@ -42,6 +42,7 @@ function valueNoise(tile: [number, number], gridSize: number, seed: number): num
 
 function mergeFloatArrays(arrs: Float32Array[]) {
     let length = arrs.map(e => e.length).reduce((prev, cur) => prev + cur, 0)
+    console.log(length)
     let out = new Float32Array(length)
     let combinedLength = 0
     for (let i = 0; i < arrs.length; i++) {
@@ -93,11 +94,12 @@ export class FloorChunkLoader {
 export class FloorChunk {
     public tiles: number = 0; // Number of tiles that should be *drawn* each frame
     public tilePositionsF32: Float32Array; // (4 x tiles) array of cube translations, in homogeneous coordinates
+    public tileBiomesF32: Float32Array; 
+    public tileScalesF32: Float32Array; 
     public centerX : number; // Center of the chunk
     public centerZ : number;
     private settings: FloorChunkSettings;
     private length: number;
-    public tileBiomesF32: Float32Array; 
     public rooms: Room[] = []
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
@@ -132,6 +134,8 @@ export class FloorChunk {
         this.wallPositions = mergeFloatArrays(tree.rooms.map(e => e.wallPositions))
         this.wallScales = mergeFloatArrays(tree.rooms.map(e => e.wallScales))
         this.tileBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileBiomesF32))
+        this.tileScalesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileScalesF32))
+        this.tiles = this.tileScalesF32.length / 4
         this.rooms = tree.rooms
     }
 }
@@ -286,6 +290,7 @@ class Room {
     public maxCorner: [number, number]
     public tilePositionsF32: Float32Array
     public tileBiomesF32: Float32Array 
+    public tileScalesF32: Float32Array
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
     private settings: FloorChunkSettings
@@ -305,24 +310,37 @@ class Room {
         const height = (this.maxCorner[1] - this.minCorner[1])/this.settings.tileSize
         console.log(width)
         console.log(height)
-        const tiles = width * height
+        const tiles = 1//width * height
         this.tilePositionsF32 = new Float32Array(tiles * 4);
+        this.tileScalesF32 = new Float32Array(tiles * 4);
         this.tileBiomesF32 = new Float32Array(tiles)
         const median: [number, number] = [(this.minCorner[0] + this.maxCorner[0])/2, (this.minCorner[1] + this.maxCorner[1])/2]
         const biome = Math.floor(valueNoise(median, this.settings.tileSize, this.settings.seed) * 4)
+        
+        this.tilePositionsF32[0] = median[0]
+        this.tilePositionsF32[1] = this.settings.y
+        this.tilePositionsF32[2] = median[1]
+        this.tilePositionsF32[3] = 0;
+        this.tileBiomesF32[0] = biome
+
+        this.tileScalesF32[0] = width
+        this.tileScalesF32[1] = 1
+        this.tileScalesF32[2] = height 
+        this.tileScalesF32[3] = 1
+        
         //console.log(`median ${median} width ${width} height ${height} biome ${biome}`)
-        for (let i = 0; i < height; i++) {
-            for (let j = 0; j < width; j++) {
-                const idx = width * i + j;
-                const x = topleftx + j * this.settings.tileSize;
-                const z = toplefty + i * this.settings.tileSize;
-                this.tilePositionsF32[4*idx + 0] = x
-                this.tilePositionsF32[4*idx + 1] = this.settings.y
-                this.tilePositionsF32[4*idx + 2] = z
-                this.tilePositionsF32[4*idx + 3] = 0;
-                this.tileBiomesF32[idx] = biome
-            }
-        }
+        // for (let i = 0; i < height; i++) {
+        //     for (let j = 0; j < width; j++) {
+        //         const idx = width * i + j;
+        //         const x = topleftx + j * this.settings.tileSize;
+        //         const z = toplefty + i * this.settings.tileSize;
+        //         this.tilePositionsF32[4*idx + 0] = x
+        //         this.tilePositionsF32[4*idx + 1] = this.settings.y
+        //         this.tilePositionsF32[4*idx + 2] = z
+        //         this.tilePositionsF32[4*idx + 3] = 0;
+        //         this.tileBiomesF32[idx] = biome
+        //     }
+        // }
     }
 
     private generateWalls() {

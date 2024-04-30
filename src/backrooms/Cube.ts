@@ -18,35 +18,35 @@ export class Cube {
 
     this.positionsRay = [
       /* Top */
-      new Vec4([0, 1, 0, 1]),
-      new Vec4([0, 1, 1, 1]),
-      new Vec4([1, 1, 1, 1]),
-      new Vec4([1, 1, 0, 1]),
+      new Vec4([-0.5, 0.5, -0.5, 1.0]),
+      new Vec4([-0.5, 0.5, 0.5, 1.0]),
+      new Vec4([0.5, 0.5, 0.5, 1.0]),
+      new Vec4([0.5, 0.5, -0.5, 1.0]),
       /* Left */
-      new Vec4([0, 1, 1, 1]),
-      new Vec4([0, 0, 1, 1]),
-      new Vec4([0, 0, 0, 1]),
-      new Vec4([0, 1, 0, 1]),
+      new Vec4([-0.5, 0.5, 0.5, 1.0]),
+      new Vec4([-0.5, -0.5, 0.5, 1.0]),
+      new Vec4([-0.5, -0.5, -0.5, 1.0]),
+      new Vec4([-0.5, 0.5, -0.5, 1.0]),
       /* Right */
-      new Vec4([1, 1, 1, 1]),
-      new Vec4([1, 0, 1, 1]),
-      new Vec4([1, 0, 0, 1]),
-      new Vec4([1, 1, 0, 1]),
+      new Vec4([0.5, 0.5, 0.5, 1.0]),
+      new Vec4([0.5, -0.5, 0.5, 1.0]),
+      new Vec4([0.5, -0.5, -0.5, 1.0]),
+      new Vec4([0.5, 0.5, -0.5, 1.0]),
       /* Front */
-      new Vec4([1, 1, 1, 1]),
-      new Vec4([1, 0, 1, 1]),
-      new Vec4([0, 0, 1, 1]),
-      new Vec4([0, 1, 1, 1]),
+      new Vec4([0.5, 0.5, 0.5, 1.0]),
+      new Vec4([0.5, -0.5, 0.5, 1.0]),
+      new Vec4([-0.5, -0.5, 0.5, 1.0]),
+      new Vec4([-0.5, 0.5, 0.5, 1.0]),
       /* Back */
-      new Vec4([1, 1, 0, 1]),
-      new Vec4([1, 0, 0, 1]),
-      new Vec4([0, 0, 0, 1]),
-      new Vec4([0, 1, 0, 1]),
+      new Vec4([0.5, 0.5, -0.5, 1.0]),
+      new Vec4([0.5, -0.5, -0.5, 1.0]),
+      new Vec4([-0.5, -0.5, -0.5, 1.0]),
+      new Vec4([-0.5, 0.5, -0.5, 1.0]),
       /* Bottom */
-      new Vec4([0, 0, 0, 1]),
-      new Vec4([0, 0, 1, 1]),
-      new Vec4([1, 0, 1, 1]),
-      new Vec4([1, 0, 0, 1]),
+      new Vec4([-0.5, -0.5, -0.5, 1.0]),
+      new Vec4([-0.5, -0.5, 0.5, 1.0]),
+      new Vec4([0.5, -0.5, 0.5, 1.0]),
+      new Vec4([0.5, -0.5, -0.5, 1.0])
     ];
     console.assert(this.positionsRay != null);
     console.assert(this.positionsRay.length === 4 * 6);

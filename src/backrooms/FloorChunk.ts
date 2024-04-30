@@ -51,34 +51,99 @@ function mergeFloatArrays(arrs: Float32Array[]) {
     return out 
 }
 
+function valueExists<TValue>(value: TValue | null | undefined): value is TValue {
+    return value !== null && value !== undefined;
+}
 
 export class FloorChunkLoader {
     private settings: FloorChunkSettings
-    private chunks: FloorChunk[][]
-    private radius: number
+    
+    // (-x, -z), (-z), (+x, -z), (-x), (current chunk), (+x), (-x, +z), (+z), (+x, +z)
+    private chunks: (FloorChunk | null)[]
 
 
-    constructor(x: number, z: number, radius: number, settings: FloorChunkSettings) {
+    constructor(x: number, z: number, settings: FloorChunkSettings) {
         this.settings = settings
-        this.radius = radius
         this.initializeMap(x, z)
     }
 
-    public initializeMap(x: number, z: number) {
-        const diameter = 2 * this.radius + 1
+    public getNearestCenter(x: number, z: number): [number, number] {
         const spacing = this.settings.size * this.settings.tileSize
-        const centerX = roundDown(x, spacing)
-        const centerZ = roundDown(z, spacing)
-        this.chunks = Array.from(Array(diameter), () => [])
-        for (let i = -this.radius; i <= this.radius; i++) {
-            for (let j = -this.radius; j <= this.radius; j++) {
-                this.chunks[i + this.radius].push(new FloorChunk(centerX + j*spacing, centerZ + i*spacing, this.settings));
-            }
+        let newX = x
+        if (negativeMod(x, spacing) >= spacing / 2) {
+            newX += spacing
         }
+        let newZ = z
+        if (negativeMod(z, spacing) >= spacing / 2) {
+            newZ += spacing
+        }
+        return [roundDown(newX, spacing), roundDown(newZ, spacing)]
+    }
 
-        // const boundaries = Array.from(Array(diameter - 1).keys(), (e) => (e - this.radius + 0.5) * this.settings.size)
-        // this.xBoundaries = [...boundaries]
-        // this.zBoundaries = [...boundaries]
+    public initializeMap(x: number, z: number) {
+        this.chunks = Array(9).map(_ => null)
+        const [centerX, centerZ] = this.getNearestCenter(x, z)
+        this.chunks[4] = new FloorChunk(centerX, centerZ, this.settings)
+    }
+
+    public loadAfterMovement(playerX: number, playerZ: number) {
+        // are you in a new chunk?
+        const centerChunk: FloorChunk = this.chunks[4]!
+        const [xFrac, zFrac] = centerChunk.fractionalCoords(playerX, playerZ) 
+
+        if (!centerChunk.inBounds(playerX, playerZ)) {
+            this.initializeMap(playerX, playerZ)
+            return
+        }
+        
+        // deload or load: top left corner
+        if (xFrac > .2 || zFrac > .2) {
+            this.chunks[0] = null
+        } else if (this.chunks[0] === null) {
+            this.chunks[0] = centerChunk.newNeighbor(-1, -1)
+        }
+        // deload or load: top edge
+        if (zFrac > .2) {
+            this.chunks[1] = null
+        } else if (this.chunks[1] === null) {
+            this.chunks[1] = centerChunk.newNeighbor(0, -1)
+        }
+        // deload or load: top right corner
+        if (xFrac < .8 || zFrac > .2) {
+            this.chunks[2] = null 
+        } else if (this.chunks[2] === null) {
+            this.chunks[2] = centerChunk.newNeighbor(1, -1)
+        }
+        // deload or load: left edge
+        if (xFrac > .2) {
+            this.chunks[3] = null
+        } else if (this.chunks[3] === null) {
+            this.chunks[3] = centerChunk.newNeighbor(-1, 0)
+        }
+        // deload or load: right edge
+        if (xFrac < .8) {
+            this.chunks[5] = null
+        } else if (this.chunks[5] === null) {
+            this.chunks[5] = centerChunk.newNeighbor(1, 0)
+        }
+        // deload or load: bottom left corner
+        if (xFrac > .2 || zFrac < .8) {
+            this.chunks[6] = null 
+        } else if (this.chunks[6] === null) {
+            this.chunks[6] = centerChunk.newNeighbor(-1, 1)
+        }
+        // deload or load: bottom edge
+        if (zFrac < .8) {
+            this.chunks[7] = null
+        } else if (this.chunks[7] === null) {
+            this.chunks[7] = centerChunk.newNeighbor(0, 1)
+        }
+        // deload or load: bottom right corner
+        if (xFrac < .8 || zFrac < .8) {
+            this.chunks[8] = null
+        } else if (this.chunks[8] === null) {
+            this.chunks[8] = centerChunk.newNeighbor(1, 1)
+        }
     }
 
     public height(): number {
@@ -86,7 +151,8 @@ export class FloorChunkLoader {
     }
 
     public getChunks(): FloorChunk[] {
-        return this.chunks.flat()
+        let out = this.chunks.filter(valueExists)
+        return out
     }
 }
 
@@ -116,10 +182,22 @@ export class FloorChunk {
     public maxZ = () => this.centerZ + this.length / 2
     public minZ = () => this.centerZ - this.length / 2
 
+    public fractionalCoords = (x: number, z: number) : [number, number] => [
+        (x - this.minX()) / this.length,
+        (z - this.minZ()) / this.length
+    ]
+
+    public newNeighbor(xOffset: number, zOffset: number): FloorChunk {
+        return new FloorChunk(
+            this.centerX + xOffset * this.length,
+            this.centerZ + zOffset * this.length,
+            this.settings
+        )
+    }
 
     public inBounds(x: number, z: number): boolean {
-        return x >= this.minX() && x <= this.maxX()
-        && z >= this.minZ() && z <= this.maxZ()
+        return x >= this.minX() && x < this.maxX()
+        && z >= this.minZ() && z < this.maxZ()
     }
 
     public height(xz: Vec2): number {
@@ -127,7 +205,7 @@ export class FloorChunk {
     }
 
     private generateRoomsAndWalls() {
-        const tree = new RoomTree(this, this.settings, Math.ceil(Math.sqrt(this.length)))
+        const tree = new RoomTree(this, this.settings, Math.ceil(Math.sqrt(this.length)) * 2)
         this.tilePositionsF32 = mergeFloatArrays(tree.rooms.map(e => e.tilePositionsF32))
         this.wallPositions = mergeFloatArrays(tree.rooms.map(e => e.wallPositions))
         this.wallScales = mergeFloatArrays(tree.rooms.map(e => e.wallScales))
@@ -303,8 +381,8 @@ class Room {
         const toplefty = this.minCorner[1]
         const width = (this.maxCorner[0] - this.minCorner[0])/this.settings.tileSize
         const height = (this.maxCorner[1] - this.minCorner[1])/this.settings.tileSize
-        console.log(width)
-        console.log(height)
+        // console.log(width)
+        // console.log(height)
         const tiles = width * height
         this.tilePositionsF32 = new Float32Array(tiles * 4);
         this.tileBiomesF32 = new Float32Array(tiles)

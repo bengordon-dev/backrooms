@@ -17,6 +17,7 @@ import { Cube } from "./Cube.js";
 import { Tile } from "./Tile.js";
 import { Chunk, ChunkLoader } from "./Chunk.js";
 import { FloorChunk, FloorChunkLoader } from "./FloorChunk.js";
+import { Sound } from "./Sound.js";
 
 const CHUNK_RADIUS: number = 1; // vary as needed to see more chunks, I like 2 best. Significant performance implications
 const TILE_SIZE: number = 8;
@@ -72,6 +73,8 @@ export class BackroomsAnimation extends CanvasAnimation {
 
     this.lightPosition = new Vec4([-1000, 1000, -1000, 1]);
     this.backgroundColor = new Vec4([0.0, 0.37254903, 0.37254903, 1.0]);
+
+    new Sound(0.01);
   }
 
   /**
@@ -295,7 +298,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       this.wallRenderPass.drawInstanced(chunk.wallPositions.length / 4);
       //})
 
-     
+
     });
   }
 

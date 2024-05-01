@@ -114,13 +114,26 @@ export const blankCubeFSText = `
         //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*noise, 1.0);
         // }
 
-        vec4 base = vec4(0.84, 0.84, 0.49, 1.0);
-        vec4 stripes = vec4(0.75, 0.75, 0.44, 1.0);
+        vec4 base = vec4(0.71, 0.71, 0.40, 1.0);
+        vec4 stripes = vec4(0.64, 0.60, 0.31, 1.0);
+        vec4 triangle = vec4(0.59, 0.56, 0.25, 1.0);
 
         if (normal.z != 0.0) {
-            gl_FragColor = (mod(wsPos.x, 0.1) < 0.025) ? stripes : base;
+            if (mod(wsPos.x, 0.5) > 0.2 && mod(wsPos.x, 0.5) < 0.3) {
+                gl_FragColor = stripes;
+            } else if (mod(wsPos.y + (floor(wsPos.x / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.x - floor(wsPos.x / 0.5 + 0.5) * 0.5) < 0.18) {
+                gl_FragColor = triangle;
+            } else {
+                gl_FragColor = base;
+            }
         } else if (normal.x != 0.0) {
-            gl_FragColor = (mod(wsPos.z, 0.1) < 0.025) ? stripes : base;
+            if (mod(wsPos.z, 0.5) > 0.2 && mod(wsPos.z, 0.5) < 0.3) {
+                gl_FragColor = stripes;
+            } else if (mod(wsPos.y + (floor(wsPos.z / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.z - floor(wsPos.z / 0.5 + 0.5) * 0.5) < 0.18) {
+                gl_FragColor = triangle;
+            } else {
+                gl_FragColor = base;
+            }
         } else {
             gl_FragColor = base;
         }
@@ -239,7 +252,9 @@ export const blankTileFSText = `
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
         gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
-        //gl_FragColor = vec4(0.69, 0.61, 0.40, 1.0);
+        gl_FragColor =  vec4(0.91, 0.91, 0.40, 1.0);
+        gl_FragColor *= pow(perlin(xz, 0.0625), 0.75);
+        gl_FragColor.a = 1.0;
     }
 `;
 
@@ -324,5 +339,17 @@ export const ceilingFSText = `
 	    //dot_nl = clamp(dot_nl, 0.0, 1.0);
         gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
         //gl_FragColor = vec4(0.69, 0.61, 0.40, 1.0);
+        if (mod(wsPos.x, 2.0) < 0.1 || mod(wsPos.z, 2.0) < 0.1) {
+            // Stripes
+            gl_FragColor = vec4(0.59, 0.56, 0.25, 1.0);
+        } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 2.0) {
+            // Lights
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        } else {
+            // Base color
+            gl_FragColor = vec4(0.84, 0.84, 0.49, 1.0);
+            gl_FragColor *= pow(perlin(xz, 0.0625), 0.5);
+            gl_FragColor.a = 1.0;
+        }
     }
 `;

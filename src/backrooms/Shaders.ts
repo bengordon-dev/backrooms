@@ -10,13 +10,13 @@ export const blankCubeVSText = `
     attribute vec4 aOffset;
     attribute vec4 aScale;
     attribute vec2 aUV;
-    attribute float blockType;
+    attribute float aBiome;
 
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 blockOffset;
-    varying float fBlockType;
+    varying float biome;
 
     void main () {
         gl_Position = uProj * uView * (aVertPos * aScale + aOffset);
@@ -24,7 +24,7 @@ export const blankCubeVSText = `
         normal = normalize(aNorm);
         uv = aUV;
         blockOffset = aOffset;
-        fBlockType = blockType;
+        biome = aBiome;
     }
 `;
 
@@ -37,7 +37,7 @@ export const blankCubeFSText = `
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 blockOffset;
-    varying float fBlockType;
+    varying float biome;
 
     float random (in vec2 pt, in float seed) {
         return fract(sin(seed + dot(pt.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -87,15 +87,41 @@ export const blankCubeFSText = `
         return vec2(blockOffset.x, blockOffset.z);
     }
 
+    vec4 yellowRoom() {
+        vec4 base = vec4(0.71, 0.71, 0.40, 1.0);
+        vec4 stripes = vec4(0.64, 0.60, 0.31, 1.0);
+        vec4 triangle = vec4(0.59, 0.56, 0.25, 1.0);
+
+        if (normal.z != 0.0) {
+            if (mod(wsPos.x, 0.5) > 0.2 && mod(wsPos.x, 0.5) < 0.3) {
+                return stripes;
+            } else if (mod(wsPos.y + (floor(wsPos.x / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.x - floor(wsPos.x / 0.5 + 0.5) * 0.5) < 0.18) {
+                return triangle;
+            } else {
+                return base;
+            }
+        } else if (normal.x != 0.0) {
+            if (mod(wsPos.z, 0.5) > 0.2 && mod(wsPos.z, 0.5) < 0.3) {
+                return stripes;
+            } else if (mod(wsPos.y + (floor(wsPos.z / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.z - floor(wsPos.z / 0.5 + 0.5) * 0.5) < 0.18) {
+                return triangle;
+            } else {
+                return base;
+            }
+        } else {
+            return base;
+        }
+    }
+
     void main() {
         // float seed = random(blockID(), 0.0);
         // float perlinVal = perlinOctave(uv, seed);
         // vec3 kd = vec3(0.9, 0.9, 0.9);
-        // if (fBlockType == 3.0) {
+        // if (biome == 3.0) {
         //     kd = vec3(1.0, 1.0, 1.0);
-        // } else if (fBlockType == 1.0) {
+        // } else if (biome == 1.0) {
         //     kd = vec3(0.0, 1.0, 0.0);
-        // } else if (fBlockType == 0.0) {
+        // } else if (biome == 0.0) {
         //     kd = vec3(0.8368627451, 0.6980392156862745, 0.5521568627);
         // }
         // vec3 ka = vec3(0.1, 0.1, 0.1);
@@ -106,36 +132,14 @@ export const blankCubeFSText = `
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
 
-        // if (fBlockType == 3.0) {
-        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.88 + noise*.12, 1.0);
-        // } else if (fBlockType == 0.0) {
-        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*.76 + noise*.24, 1.0);
-        // } else {
-        //     gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*noise, 1.0);
-        // }
-
-        vec4 base = vec4(0.71, 0.71, 0.40, 1.0);
-        vec4 stripes = vec4(0.64, 0.60, 0.31, 1.0);
-        vec4 triangle = vec4(0.59, 0.56, 0.25, 1.0);
-
-        if (normal.z != 0.0) {
-            if (mod(wsPos.x, 0.5) > 0.2 && mod(wsPos.x, 0.5) < 0.3) {
-                gl_FragColor = stripes;
-            } else if (mod(wsPos.y + (floor(wsPos.x / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.x - floor(wsPos.x / 0.5 + 0.5) * 0.5) < 0.18) {
-                gl_FragColor = triangle;
-            } else {
-                gl_FragColor = base;
-            }
-        } else if (normal.x != 0.0) {
-            if (mod(wsPos.z, 0.5) > 0.2 && mod(wsPos.z, 0.5) < 0.3) {
-                gl_FragColor = stripes;
-            } else if (mod(wsPos.y + (floor(wsPos.z / 0.5 + 0.5) * 0.5) / 2.0, 0.5) + abs(wsPos.z - floor(wsPos.z / 0.5 + 0.5) * 0.5) < 0.18) {
-                gl_FragColor = triangle;
-            } else {
-                gl_FragColor = base;
-            }
+        if (biome == 3.0) {
+            gl_FragColor = vec4(0.7, 0.0, 0.7, 1.0);
+        } else if (biome == 2.0) {
+            gl_FragColor = vec4(0.0, 0.7, 0.7, 1.0);
+        } else if (biome == 1.0) {
+            gl_FragColor = vec4(0.7, 0.0, 0.0, 1.0);
         } else {
-            gl_FragColor = base;
+            gl_FragColor = yellowRoom();
         }
     }
 `;
@@ -234,8 +238,7 @@ export const blankTileFSText = `
         return vec2(tileOffset.x, tileOffset.z);
     }
 
-    void main() {
-        //float seed = 0.0; // random(tileID(), 0.0);
+    vec4 perlinRoom() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
         float perlinVal = perlinOctave(xz);
         vec3 kd = vec3(0.7, 0.7, 0.0);
@@ -251,10 +254,27 @@ export const blankTileFSText = `
         vec4 lightDirection = uLightPos - wsPos;
         float dot_nl = dot(normalize(lightDirection), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
-        gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
-        gl_FragColor =  vec4(0.91, 0.91, 0.40, 1.0);
-        gl_FragColor *= pow(perlin(xz, 0.0625), 0.75);
-        gl_FragColor.a = 1.0;
+        return vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
+    }
+
+    vec4 yellowRoom() {
+        vec2 xz = vec2(wsPos.x, wsPos.z);
+        vec4 color = vec4(0.91, 0.91, 0.40, 1.0);
+        color *= pow(perlin(xz, 0.0625), 0.75);
+        color.a = 1.0;
+        return color;
+    }
+
+    void main() {
+        if (roomID == 3.0) {
+            gl_FragColor = perlinRoom();
+        } else if (roomID == 2.0) {
+            gl_FragColor = perlinRoom();
+        } else if (roomID == 1.0) {
+            gl_FragColor = perlinRoom();
+        } else {
+            gl_FragColor = yellowRoom();
+        }
     }
 `;
 
@@ -320,8 +340,24 @@ export const ceilingFSText = `
         return vec2(tileOffset.x, tileOffset.z);
     }
 
-    void main() {
-        //float seed = 0.0; // random(tileID(), 0.0);
+    vec4 yellowRoom() {
+        vec2 xz = vec2(wsPos.x, wsPos.z);
+        if (mod(wsPos.x, 2.0) < 0.1 || mod(wsPos.z, 2.0) < 0.1) {
+            // Stripes
+            return vec4(0.59, 0.56, 0.25, 1.0);
+        } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 2.0) {
+            // Lights
+            return vec4(1.0, 1.0, 1.0, 1.0);
+        } else {
+            // Base color
+            vec4 color = vec4(0.84, 0.84, 0.49, 1.0);
+            color *= pow(perlin(xz, 0.0625), 0.5);
+            color.a = 1.0;
+            return color;
+        }
+    }
+
+    vec4 perlinRoom() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
         float perlinVal = perlinOctave(xz);
         vec3 kd = vec3(0.7, 0.7, 0.0);
@@ -335,21 +371,20 @@ export const ceilingFSText = `
         vec3 ka = vec3(0.1, 0.1, 0.1);
         vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
         vec4 lightDirection = uLightPos - wsPos;
-        float dot_nl = 1.0;// dot(normalize(lightDirection), normalize(normal));
-	    //dot_nl = clamp(dot_nl, 0.0, 1.0);
-        gl_FragColor = vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
-        //gl_FragColor = vec4(0.69, 0.61, 0.40, 1.0);
-        if (mod(wsPos.x, 2.0) < 0.1 || mod(wsPos.z, 2.0) < 0.1) {
-            // Stripes
-            gl_FragColor = vec4(0.59, 0.56, 0.25, 1.0);
-        } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 2.0) {
-            // Lights
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        float dot_nl = 1.0;//dot(normalize(lightDirection), normalize(normal));
+	    dot_nl = clamp(dot_nl, 0.0, 1.0);
+        return vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
+    }
+
+    void main() {
+        if (roomID == 3.0) {
+            gl_FragColor = perlinRoom();
+        } else if (roomID == 2.0) {
+            gl_FragColor = perlinRoom();
+        } else if (roomID == 1.0) {
+            gl_FragColor = perlinRoom();
         } else {
-            // Base color
-            gl_FragColor = vec4(0.84, 0.84, 0.49, 1.0);
-            gl_FragColor *= pow(perlin(xz, 0.0625), 0.5);
-            gl_FragColor.a = 1.0;
-        }
+            gl_FragColor = yellowRoom();
+        }    
     }
 `;

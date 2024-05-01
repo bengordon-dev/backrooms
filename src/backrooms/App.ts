@@ -223,6 +223,16 @@ export class BackroomsAnimation extends CanvasAnimation {
       new Float32Array(0)
     );
 
+    this.wallRenderPass.addInstancedAttribute("aBiome",
+      1,
+      this.ctx.FLOAT,
+      false,
+      Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array(0)
+    )
+
     this.wallRenderPass.addUniform("uLightPos",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform4fv(loc, this.lightPosition.xyzw);
@@ -311,6 +321,7 @@ export class BackroomsAnimation extends CanvasAnimation {
 
       this.wallRenderPass.updateAttributeBuffer("aOffset", chunk.wallPositions);
       this.wallRenderPass.updateAttributeBuffer("aScale", chunk.wallScales);
+      this.wallRenderPass.updateAttributeBuffer("aBiome", chunk.wallBiomesF32);
       this.wallRenderPass.drawInstanced(chunk.wallPositions.length / 4);
       //})
 

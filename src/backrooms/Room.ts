@@ -307,4 +307,8 @@ export class Room {
     public getTileBiomes(): Float32Array {
         return this.tileBiomesF32
     }
+
+    public getWallBiomes(): Float32Array {
+        return new Float32Array([...Array(this.wallPositions.length / 4).keys()].map(e => this.biome))
+    }
 }

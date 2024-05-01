@@ -165,6 +165,7 @@ export class FloorChunk {
     private settings: FloorChunkSettings;
     private length: number;
     public tileBiomesF32: Float32Array; 
+    public wallBiomesF32: Float32Array;
     public rooms: Room[] = []
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
@@ -212,6 +213,7 @@ export class FloorChunk {
         this.wallPositions = mergeFloatArrays(tree.rooms.map(e => e.wallPositions))
         this.wallScales = mergeFloatArrays(tree.rooms.map(e => e.wallScales))
         this.tileBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileBiomesF32))
+        this.wallBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.getWallBiomes()))
         this.rooms = tree.rooms
     }
 }

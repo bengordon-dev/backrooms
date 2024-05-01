@@ -8,7 +8,8 @@ import {
   blankCubeFSText,
   blankCubeVSText,
   blankTileFSText,
-  blankTileVSText
+  blankTileVSText,
+  ceilingFSText
 } from "./Shaders.js";
 import { Mat4, Vec4, Vec3, Vec2 } from "../lib/TSM.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
@@ -29,7 +30,11 @@ export class BackroomsAnimation extends CanvasAnimation {
 
   /*  Tile Rendering */
   private tileGeometry: Tile;
+  private ceilingTileGeometry: Tile;
+
   private blankTileRenderPass: RenderPass;
+  private ceilingRenderPass: RenderPass;
+
 
   private wallGeometry: Cube;
   private wallRenderPass: RenderPass;
@@ -65,8 +70,14 @@ export class BackroomsAnimation extends CanvasAnimation {
     this.floorChunkLoader = new FloorChunkLoader(0, 0, chunkSettings)
 
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
-    this.tileGeometry = new Tile();
-    this.initBlankTile();
+    this.tileGeometry = new Tile(false);
+    this.initBlankTile(this.blankTileRenderPass, this.tileGeometry);
+
+    this.ceilingTileGeometry = new Tile(true);
+    this.ceilingRenderPass = new RenderPass(gl, blankTileVSText, ceilingFSText);
+    // we may need something differen this.initBlankTile();
+    this.initBlankTile(this.ceilingRenderPass, this.ceilingTileGeometry);
+
 
     this.wallRenderPass = new RenderPass(gl, blankCubeVSText, blankCubeFSText);
     this.wallGeometry = new Cube();
@@ -86,39 +97,39 @@ export class BackroomsAnimation extends CanvasAnimation {
     this.playerPosition = this.gui.getCamera().pos();
   }
 
-  private initBlankTile(): void {
-    this.blankTileRenderPass.setIndexBufferData(this.tileGeometry.indicesFlat());
-    this.blankTileRenderPass.addAttribute("aVertPos",
+  private initBlankTile(renderPass: RenderPass, geometry: Tile): void {
+    renderPass.setIndexBufferData(geometry.indicesFlat());
+    renderPass.addAttribute("aVertPos",
       4,
       this.ctx.FLOAT,
       false,
       4 * Float32Array.BYTES_PER_ELEMENT,
       0,
       undefined,
-      this.tileGeometry.positionsFlat()
+      geometry.positionsFlat()
     );
 
-    this.blankTileRenderPass.addAttribute("aNorm",
+    renderPass.addAttribute("aNorm",
       4,
       this.ctx.FLOAT,
       false,
       4 * Float32Array.BYTES_PER_ELEMENT,
       0,
       undefined,
-      this.tileGeometry.normalsFlat()
+      geometry.normalsFlat()
     );
 
-    this.blankTileRenderPass.addAttribute("aUV",
+    renderPass.addAttribute("aUV",
       2,
       this.ctx.FLOAT,
       false,
       2 * Float32Array.BYTES_PER_ELEMENT,
       0,
       undefined,
-      this.tileGeometry.uvFlat()
+      geometry.uvFlat()
     );
 
-    this.blankTileRenderPass.addInstancedAttribute("aOffset",
+    renderPass.addInstancedAttribute("aOffset",
       4,
       this.ctx.FLOAT,
       false,
@@ -128,7 +139,7 @@ export class BackroomsAnimation extends CanvasAnimation {
       new Float32Array(0)
     );
 
-    this.blankTileRenderPass.addInstancedAttribute("aRoomID",
+    renderPass.addInstancedAttribute("aRoomID",
       1,
       this.ctx.FLOAT,
       false,
@@ -138,26 +149,26 @@ export class BackroomsAnimation extends CanvasAnimation {
       new Float32Array(0)
     )
 
-    this.blankTileRenderPass.addUniform("uLightPos",
+    renderPass.addUniform("uLightPos",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform4fv(loc, this.lightPosition.xyzw);
     });
-    this.blankTileRenderPass.addUniform("uProj",
+    renderPass.addUniform("uProj",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.projMatrix().all()));
     });
-    this.blankTileRenderPass.addUniform("uView",
+    renderPass.addUniform("uView",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
     });
-    this.blankTileRenderPass.addUniform("tileSize",
+    renderPass.addUniform("tileSize",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         //gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
         gl.uniform1f(loc, TILE_SIZE)
     });
 
-    this.blankTileRenderPass.setDrawData(this.ctx.TRIANGLES, this.tileGeometry.indicesFlat().length, this.ctx.UNSIGNED_INT, 0);
-    this.blankTileRenderPass.setup();
+    renderPass.setDrawData(this.ctx.TRIANGLES, geometry.indicesFlat().length, this.ctx.UNSIGNED_INT, 0);
+    renderPass.setup();
   }
 
   private initWalls(): void {
@@ -294,6 +305,10 @@ export class BackroomsAnimation extends CanvasAnimation {
       this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositionsF32);
       this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
       this.blankTileRenderPass.drawInstanced(chunk.tiles);
+      this.ceilingRenderPass.updateAttributeBuffer("aOffset", chunk.ceilingPositionsF32);
+      this.ceilingRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
+      this.ceilingRenderPass.drawInstanced(chunk.tiles);
+
       this.wallRenderPass.updateAttributeBuffer("aOffset", chunk.wallPositions);
       this.wallRenderPass.updateAttributeBuffer("aScale", chunk.wallScales);
       this.wallRenderPass.drawInstanced(chunk.wallPositions.length / 4);

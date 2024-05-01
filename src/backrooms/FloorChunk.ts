@@ -154,6 +154,13 @@ export class FloorChunkLoader {
         let out = this.chunks.filter(valueExists)
         return out
     }
+
+    public getCurrentBiome(x: number, z: number): number {
+        if (!valueExists(this.chunks[4])) {
+            return -1
+        }
+        return this.chunks[4].tree.getBiome(x, z)
+    } 
 }
 
 export class FloorChunk {
@@ -167,6 +174,7 @@ export class FloorChunk {
     public tileBiomesF32: Float32Array; 
     public wallBiomesF32: Float32Array;
     public rooms: Room[] = []
+    public tree: RoomTree
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
 
@@ -215,5 +223,6 @@ export class FloorChunk {
         this.tileBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileBiomesF32))
         this.wallBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.getWallBiomes()))
         this.rooms = tree.rooms
+        this.tree = tree
     }
 }

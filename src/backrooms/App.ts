@@ -288,7 +288,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     this.updateY()
     this.gui.getCamera().setPos(this.playerPosition);
     this.floorChunkLoader.loadAfterMovement(this.playerPosition.x, this.playerPosition.z)
-
+    //console.log(this.floorChunkLoader.getCurrentBiome(this.playerPosition.x, this.playerPosition.z))
     // Drawing
     const gl: WebGLRenderingContext = this.ctx;
     const bg: Vec4 = this.backgroundColor;

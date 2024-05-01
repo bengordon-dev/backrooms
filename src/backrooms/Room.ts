@@ -20,6 +20,7 @@ class RoomTreeNode {
     public left: RoomTreeNode | null = null
     public right: RoomTreeNode | null = null
     public point: [number, number] | null = null
+    public room: Room | null = null
 
     constructor(settings: FloorChunkSettings, dimension: DivisionDimension,
         minCorner: [number, number], maxCorner: [number, number]) {
@@ -106,7 +107,8 @@ class RoomTreeNode {
 
     private traverseHelper(rooms: Room[]) {
         if (this.isLeaf()) {
-            rooms.push(new Room(this.minCorner, this.maxCorner, this.settings))
+            this.room = new Room(this.minCorner, this.maxCorner, this.settings) 
+            rooms.push(this.room)
         } else {
             this.left?.traverseHelper(rooms)
             this.right?.traverseHelper(rooms)
@@ -117,6 +119,20 @@ class RoomTreeNode {
         let rooms: Room[] = []
         this.traverseHelper(rooms)
         return rooms
+    }
+
+    public getBiome(xz: [number, number]): number {
+        if (xz[0] < this.minCorner[0] || xz[0] >= this.maxCorner[0] 
+            || xz[1] < this.minCorner[1] && xz[1] >= this.maxCorner[1]) {
+            return -1
+        }
+        if (this.isLeaf()) {
+            return this.room!.biome
+        }
+        if (xz[this.dimension] >= this.threshold!) {
+            return this.right!.getBiome(xz)
+        }
+        return this.left!.getBiome(xz)
     }
 }
 
@@ -147,6 +163,10 @@ export class RoomTree {
         this.rooms = rooms
     }
 
+    public getBiome(x: number, z: number): number {
+        return this.root.getBiome([x, z])
+    }
+
     
 }
 
@@ -156,7 +176,7 @@ export class Room {
     public maxCorner: [number, number]
     public tilePositionsF32: Float32Array
     public ceilingPositionsF32: Float32Array;
-    private biome: number
+    public biome: number
     public tileBiomesF32: Float32Array 
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
@@ -240,43 +260,6 @@ export class Room {
         }
        
     }
-
-    // private makeWallSide(start: number, stop: number, constCoord: number, constDimension: DivisionDimension,
-    //     isMin: boolean, height: number, wallOffsets: number[], wallScales: number[]) {
-    //     const length = stop - start
-    //     const adj = this.settings.tileSize / 2
-    //     const yOffset = this.settings.y + height / 2
-    //     const constAdj = isMin ? 0.5 : -0.5
-
-    //     // const doorFraction = whiteNoise([start, constCoord], this.settings.seed + stop)
-    
-    //     const doorLengthFraction = this.settings.tileSize / length 
-    //     const dlfRange = Math.max(0, 1 - 3 * doorLengthFraction)
-    //     // min = DLF, max = 1 - DLF - DLF 
-    //     // range = Max(0, 1 - 3 * DLF)
-    //     const wn = whiteNoise([start, stop], this.settings.seed + constCoord)
-    //     const doorFraction = doorLengthFraction + dlfRange * wn
-    //     const doorStart = start + doorFraction * length 
-    //     const doorEnd = start + (doorFraction + doorLengthFraction) * length
-    //     const firstLength = doorStart - start
-    //     const firstMainOffset = start + firstLength / 2
-    //     const secondLength = stop - doorEnd
-    //     const secondMainOffset = doorEnd + secondLength / 2
-
-    //     if (constDimension === DivisionDimension.X) { // along the Z dimension, vertical bar
-    //         wallOffsets.push(constCoord - adj + constAdj, yOffset, firstMainOffset - adj, 0)
-    //         wallScales.push(1, height, firstLength, 1)
-    //         wallOffsets.push(constCoord - adj + constAdj, yOffset, secondMainOffset - adj, 0)
-    //         wallScales.push(1, height, secondLength, 1)
-    //     } else { // along the X dimension, horizontal bar
-    //         wallOffsets.push(firstMainOffset - adj, yOffset, constCoord - adj + constAdj, 0)
-    //         wallScales.push(firstLength, height, 1, 1)
-
-    //         wallOffsets.push(secondMainOffset - adj, yOffset, constCoord - adj + constAdj, 0)
-    //         wallScales.push(secondLength, height, 1, 1)
-    //     }
-       
-    // }
 
     private generateWalls() {
         //if (this.dimension === DivisionDimension.X) { // left and right, vertical bar

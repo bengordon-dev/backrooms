@@ -206,7 +206,6 @@ export class Room {
         isMin: boolean, height: number, wallOffsets: number[], wallScales: number[]) {
         const length = stop - start
         const doorPanels = length / this.settings.tileSize
-        console.log(doorPanels)
         const adj = this.settings.tileSize / 2
         const topYOffset = this.settings.y + 6 + (height - 6) / 2
         const bottomYOffset = this.settings.y + 3

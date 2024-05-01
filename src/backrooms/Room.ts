@@ -8,8 +8,8 @@ enum DivisionDimension {
 }
 
 const NUM_BIOMES = 4
-const biomeRoomHeights = [6, 12, 24, 9] // maybe scale this by some factor
-// yellow, red, cyan, purple
+const biomeRoomHeights = [6, 18, 24, 9] // maybe scale this by some factor
+// yellow, pool, garage, school
 
 class RoomTreeNode {
     public settings: FloorChunkSettings

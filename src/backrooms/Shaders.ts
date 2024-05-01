@@ -113,6 +113,32 @@ export const blankCubeFSText = `
         }
     }
 
+    vec4 poolRoom() {
+        vec2 xy = vec2(wsPos.z, wsPos.y);
+        if (normal.z != 0.0) {
+            xy = vec2(wsPos.x, wsPos.y);
+        } else if (normal.y != 0.0) {
+            xy = vec2(wsPos.x, wsPos.z);
+        }
+        float xFrac = fract(xy.x);
+        float yFrac = fract(xy.y);
+        if (xFrac < 0.05 || yFrac < 0.05) {
+            // Stripes
+            return vec4(0.5, 0.5, 0.5, 1.0);
+        }
+        if (xFrac < 0.075 || yFrac < 0.075 || xFrac > 0.975 || yFrac > 0.975) {
+            return vec4(0.6, 0.6, 0.6, 1.0);
+        }
+        if (xFrac < 0.1 || yFrac < 0.1 || xFrac > 0.95 || yFrac > 0.95) {
+            return vec4(0.7, 0.7, 0.7, 1.0);
+        }
+
+        // Base color
+        vec3 color = vec3(0.8, 0.8, 0.8);
+        color += perlin(xy, 0.5, 0.0) * 0.2;
+        return vec4(color, 1.0);
+    }
+
     void main() {
         // float seed = random(blockID(), 0.0);
         // float perlinVal = perlinOctave(uv, seed);
@@ -137,7 +163,7 @@ export const blankCubeFSText = `
         } else if (biome == 2.0) {
             gl_FragColor = vec4(0.0, 0.7, 0.7, 1.0);
         } else if (biome == 1.0) {
-            gl_FragColor = vec4(0.7, 0.0, 0.0, 1.0);
+            gl_FragColor = poolRoom();
         } else {
             gl_FragColor = yellowRoom();
         }
@@ -257,6 +283,24 @@ export const blankTileFSText = `
         return vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
     }
 
+    vec4 poolRoom() {
+        vec2 xy = vec2(wsPos.x, wsPos.z);
+        float xFrac = fract(xy.x);
+        float yFrac = fract(xy.y);
+        vec3 color = vec3(0.8, 0.8, 0.8) + perlin(xy, 0.5) * 0.2;
+        if (xFrac < 0.05 || yFrac < 0.05) {
+            // Stripes
+            color = vec3(0.5, 0.5, 0.5);
+        } else if (xFrac < 0.075 || yFrac < 0.075 || xFrac > 0.975 || yFrac > 0.975) {
+            color = vec3(0.6, 0.6, 0.6);
+        } else if (xFrac < 0.1 || yFrac < 0.1 || xFrac > 0.95 || yFrac > 0.95) {
+            color = vec3(0.7, 0.7, 0.7);
+        }
+
+        // Base color
+        return vec4(color * vec3(0.7, 0.95, 0.95), 1.0);
+    }
+
     vec4 yellowRoom() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
         vec4 color = vec4(0.91, 0.91, 0.40, 1.0);
@@ -271,7 +315,7 @@ export const blankTileFSText = `
         } else if (roomID == 2.0) {
             gl_FragColor = perlinRoom();
         } else if (roomID == 1.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = poolRoom();
         } else {
             gl_FragColor = yellowRoom();
         }
@@ -376,13 +420,21 @@ export const ceilingFSText = `
         return vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
     }
 
+    vec4 poolRoom() {
+        vec2 xz = vec2(wsPos.x, wsPos.z);
+        float perlinVal = perlinOctave(xz);
+        vec3 kd = vec3(1.0, 1.0, 1.0);
+        vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
+        return vec4(kd*(0.7 + noise*0.15), 1.0);
+    }
+
     void main() {
         if (roomID == 3.0) {
             gl_FragColor = perlinRoom();
         } else if (roomID == 2.0) {
             gl_FragColor = perlinRoom();
         } else if (roomID == 1.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = poolRoom();
         } else {
             gl_FragColor = yellowRoom();
         }    

@@ -209,7 +209,6 @@ export class FloorChunk {
         const tree = new RoomTree(this, this.settings, Math.ceil(Math.sqrt(this.length)) * 2)
         this.tilePositionsF32 = mergeFloatArrays(tree.rooms.map(e => e.tilePositionsF32))
         this.ceilingPositionsF32 = mergeFloatArrays(tree.rooms.map(e => e.ceilingPositionsF32))
-        console.log(this.ceilingPositionsF32)
         this.wallPositions = mergeFloatArrays(tree.rooms.map(e => e.wallPositions))
         this.wallScales = mergeFloatArrays(tree.rooms.map(e => e.wallScales))
         this.tileBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileBiomesF32))

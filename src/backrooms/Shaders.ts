@@ -138,6 +138,17 @@ export const blankCubeFSText = `
         color += perlin(xy, 0.5, 0.0) * 0.2;
         return vec4(color, 1.0);
     }
+    
+    vec4 garage() {
+        vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
+        if (normal.z != 0.0) {
+            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y), 0.0), 0.04);
+        } else if (normal.x != 0.0) {
+            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y), 0.0), 0.04);
+        }
+        base.a = 1.0;
+        return base;
+    }
 
     void main() {
         // float seed = random(blockID(), 0.0);
@@ -161,7 +172,7 @@ export const blankCubeFSText = `
         if (biome == 3.0) {
             gl_FragColor = vec4(0.7, 0.0, 0.7, 1.0);
         } else if (biome == 2.0) {
-            gl_FragColor = vec4(0.0, 0.7, 0.7, 1.0);
+            gl_FragColor = garage();
         } else if (biome == 1.0) {
             gl_FragColor = poolRoom();
         } else {
@@ -309,11 +320,28 @@ export const blankTileFSText = `
         return color;
     }
 
+    vec4 garage() {
+        vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
+        if (normal.z != 0.0) {
+            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y)), 0.04);
+        } else if (normal.x != 0.0) {
+            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y)), 0.04);
+        }
+        base.a = 1.0;
+        if (mod(wsPos.x, 20.0) < 0.1) {
+            return vec4(1.0, 1.0, 0.0, 1.0);
+        }
+        if (mod(wsPos.z, 3.0) < 0.1 && mod(wsPos.x + 5.0, 20.0) < 10.0) {
+            return vec4(1.0, 1.0, 0.0, 1.0);
+        }
+        return base;
+    }
+
     void main() {
         if (roomID == 3.0) {
             gl_FragColor = perlinRoom();
         } else if (roomID == 2.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = garage();
         } else if (roomID == 1.0) {
             gl_FragColor = poolRoom();
         } else {
@@ -401,6 +429,13 @@ export const ceilingFSText = `
         }
     }
 
+    vec4 garage() {
+        if (mod(wsPos.x, 0.5) < 0.1 && mod(wsPos.z, 0.5) < 0.1) {
+            return vec4(1.0, 1.0, 1.0, 1.0);
+        }
+        return vec4(0.6, 0.6, 0.6, 1.0);
+    }
+
     vec4 perlinRoom() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
         float perlinVal = perlinOctave(xz);
@@ -432,11 +467,11 @@ export const ceilingFSText = `
         if (roomID == 3.0) {
             gl_FragColor = perlinRoom();
         } else if (roomID == 2.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = garage();
         } else if (roomID == 1.0) {
             gl_FragColor = poolRoom();
         } else {
             gl_FragColor = yellowRoom();
-        }    
+        }
     }
 `;

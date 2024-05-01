@@ -203,47 +203,80 @@ export class Room {
     }
 
     private makeWallSide(start: number, stop: number, constCoord: number, constDimension: DivisionDimension,
-        height: number, wallOffsets: number[], wallScales: number[]) {
+        isMin: boolean, height: number, wallOffsets: number[], wallScales: number[]) {
         const length = stop - start
+        const doorPanels = length / this.settings.tileSize
         const adj = this.settings.tileSize / 2
-        const yOffset = this.settings.y + height / 2
+        const topYOffset = this.settings.y + 6 + (height - 6) / 2
+        const bottomYOffset = this.settings.y + 3
+        const constAdj = isMin ? 0.5 : -0.5
 
-        // const doorFraction = whiteNoise([start, constCoord], this.settings.seed + stop)
-    
-        const doorLengthFraction = this.settings.tileSize / length 
-        const dlfRange = Math.max(0, 1 - 3 * doorLengthFraction)
-        // min = DLF, max = 1 - DLF - DLF 
-        // range = Max(0, 1 - 3 * DLF)
-        const wn = whiteNoise([start, stop], this.settings.seed + constCoord)
-        const doorFraction = doorLengthFraction + dlfRange * wn
-        const doorStart = start + doorFraction * length 
-        const doorEnd = start + (doorFraction + doorLengthFraction) * length
-
-        if (doorEnd > stop || doorStart < start || doorEnd <= doorStart) {
-            console.log(`dlf ${doorLengthFraction} df ${doorFraction} ${start} ${doorStart} ${doorEnd} ${stop} const ${constCoord}`)
-            console.log(`wn ${wn}`)
-        }
-
-
-        const firstLength = doorStart - start
-        const firstMainOffset = start + firstLength / 2
-        const secondLength = stop - doorEnd
-        const secondMainOffset = doorEnd + secondLength / 2
+        const topOffset = start + length / 2
+        const bottomOffset = (i: number) : number => start + (i + 0.5) * this.settings.tileSize   
+        const wn = (i: number) : boolean => whiteNoise([bottomOffset(i), constCoord], this.settings.seed) > 0.1
 
         if (constDimension === DivisionDimension.X) { // along the Z dimension, vertical bar
-            wallOffsets.push(constCoord - adj, yOffset, firstMainOffset - adj, 0)
-            wallScales.push(1, height, firstLength, 1)
-            wallOffsets.push(constCoord - adj, yOffset, secondMainOffset - adj, 0)
-            wallScales.push(1, height, secondLength, 1)
+            if (height > 6) {
+                wallOffsets.push(constCoord - adj + constAdj, topYOffset, topOffset - adj, 0)
+                wallScales.push(1, height - 6, length, 1)
+            }
+            for (let i = 0; i < doorPanels; i++) {
+                if (wn(i)) {
+                    wallOffsets.push(constCoord - adj + constAdj, bottomYOffset, bottomOffset(i) - adj, 0)
+                    wallScales.push(1, 6, this.settings.tileSize, 1)
+                }
+            }
         } else { // along the X dimension, horizontal bar
-            wallOffsets.push(firstMainOffset - adj, yOffset, constCoord - adj, 0)
-            wallScales.push(firstLength, height, 1, 1)
-
-            wallOffsets.push(secondMainOffset - adj, yOffset, constCoord - adj, 0)
-            wallScales.push(secondLength, height, 1, 1)
+            if (height > 6) {
+                wallOffsets.push(topOffset - adj, topYOffset, constCoord - adj + constAdj, 0)
+                wallScales.push(length, height - 6, 1, 1)
+            }
+            for (let i = 0; i < doorPanels; i++) {
+                if (wn(i)) {
+                    wallOffsets.push(bottomOffset(i) - adj, bottomYOffset, constCoord - adj + constAdj, 0)
+                    wallScales.push(this.settings.tileSize, 6, 1, 1)
+                }
+            }
         }
        
     }
+
+    // private makeWallSide(start: number, stop: number, constCoord: number, constDimension: DivisionDimension,
+    //     isMin: boolean, height: number, wallOffsets: number[], wallScales: number[]) {
+    //     const length = stop - start
+    //     const adj = this.settings.tileSize / 2
+    //     const yOffset = this.settings.y + height / 2
+    //     const constAdj = isMin ? 0.5 : -0.5
+
+    //     // const doorFraction = whiteNoise([start, constCoord], this.settings.seed + stop)
+    
+    //     const doorLengthFraction = this.settings.tileSize / length 
+    //     const dlfRange = Math.max(0, 1 - 3 * doorLengthFraction)
+    //     // min = DLF, max = 1 - DLF - DLF 
+    //     // range = Max(0, 1 - 3 * DLF)
+    //     const wn = whiteNoise([start, stop], this.settings.seed + constCoord)
+    //     const doorFraction = doorLengthFraction + dlfRange * wn
+    //     const doorStart = start + doorFraction * length 
+    //     const doorEnd = start + (doorFraction + doorLengthFraction) * length
+    //     const firstLength = doorStart - start
+    //     const firstMainOffset = start + firstLength / 2
+    //     const secondLength = stop - doorEnd
+    //     const secondMainOffset = doorEnd + secondLength / 2
+
+    //     if (constDimension === DivisionDimension.X) { // along the Z dimension, vertical bar
+    //         wallOffsets.push(constCoord - adj + constAdj, yOffset, firstMainOffset - adj, 0)
+    //         wallScales.push(1, height, firstLength, 1)
+    //         wallOffsets.push(constCoord - adj + constAdj, yOffset, secondMainOffset - adj, 0)
+    //         wallScales.push(1, height, secondLength, 1)
+    //     } else { // along the X dimension, horizontal bar
+    //         wallOffsets.push(firstMainOffset - adj, yOffset, constCoord - adj + constAdj, 0)
+    //         wallScales.push(firstLength, height, 1, 1)
+
+    //         wallOffsets.push(secondMainOffset - adj, yOffset, constCoord - adj + constAdj, 0)
+    //         wallScales.push(secondLength, height, 1, 1)
+    //     }
+       
+    // }
 
     private generateWalls() {
         //if (this.dimension === DivisionDimension.X) { // left and right, vertical bar
@@ -251,13 +284,13 @@ export class Room {
         let wallScales: number[] = []
 
         this.makeWallSide(this.minCorner[1], this.maxCorner[1], this.minCorner[0], DivisionDimension.X,
-            biomeRoomHeights[this.biome], wallOffsets, wallScales)
+            true, biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[1], this.maxCorner[1], this.maxCorner[0], DivisionDimension.X,
-            biomeRoomHeights[this.biome], wallOffsets, wallScales)
+            false, biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[0], this.maxCorner[0], this.minCorner[1], DivisionDimension.Z,
-            biomeRoomHeights[this.biome], wallOffsets, wallScales)
+            true, biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[0], this.maxCorner[0], this.maxCorner[1], DivisionDimension.Z,
-            biomeRoomHeights[this.biome], wallOffsets, wallScales)
+            false, biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.wallPositions = new Float32Array(wallOffsets)
         this.wallScales = new Float32Array(wallScales)
 

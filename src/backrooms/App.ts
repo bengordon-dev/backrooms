@@ -243,9 +243,9 @@ export class BackroomsAnimation extends CanvasAnimation {
 
 
   private updateXZ(walkDir: Vec3): void {
-    let newPos = this.playerPosition.copy().add(walkDir)
     if (this.floorChunkLoader.height() <= this.playerPosition.y - 2) {
       this.playerPosition.add(walkDir)
+      //console.log(this.playerPosition.xyz)
     }
   }
 

@@ -7,6 +7,10 @@ enum DivisionDimension {
     Z,
 }
 
+const NUM_BIOMES = 4
+const biomeRoomHeights = [6, 12, 24, 9] // maybe scale this by some factor
+// yellow, red, cyan, purple
+
 class RoomTreeNode {
     public settings: FloorChunkSettings
     public minCorner: [number, number]
@@ -151,6 +155,8 @@ export class Room {
     public minCorner: [number, number]
     public maxCorner: [number, number]
     public tilePositionsF32: Float32Array
+    public ceilingPositionsF32: Float32Array;
+    private biome: number
     public tileBiomesF32: Float32Array 
     public wallPositions: Float32Array;
     public wallScales: Float32Array;
@@ -160,6 +166,8 @@ export class Room {
         this.minCorner = minCorner
         this.maxCorner = maxCorner
         this.settings = settings 
+        const median: [number, number] = [(this.minCorner[0] + this.maxCorner[0])/2, (this.minCorner[1] + this.maxCorner[1])/2]
+        this.biome = Math.floor(valueNoise(median, this.settings.tileSize, this.settings.seed) * NUM_BIOMES)
         this.generateTiles()
         this.generateWalls()
     }
@@ -173,9 +181,8 @@ export class Room {
         // console.log(height)
         const tiles = width * height
         this.tilePositionsF32 = new Float32Array(tiles * 4);
+        this.ceilingPositionsF32 = new Float32Array(tiles * 4);
         this.tileBiomesF32 = new Float32Array(tiles)
-        const median: [number, number] = [(this.minCorner[0] + this.maxCorner[0])/2, (this.minCorner[1] + this.maxCorner[1])/2]
-        const biome = Math.floor(valueNoise(median, this.settings.tileSize, this.settings.seed) * 4)
         //console.log(`median ${median} width ${width} height ${height} biome ${biome}`)
         for (let i = 0; i < height; i++) {
             for (let j = 0; j < width; j++) {
@@ -186,7 +193,11 @@ export class Room {
                 this.tilePositionsF32[4*idx + 1] = this.settings.y
                 this.tilePositionsF32[4*idx + 2] = z
                 this.tilePositionsF32[4*idx + 3] = 0;
-                this.tileBiomesF32[idx] = biome
+                this.ceilingPositionsF32[4*idx + 0] = x
+                this.ceilingPositionsF32[4*idx + 1] = this.settings.y + biomeRoomHeights[this.biome]
+                this.ceilingPositionsF32[4*idx + 2] = z
+                this.ceilingPositionsF32[4*idx + 3] = 0;
+                this.tileBiomesF32[idx] = this.biome
             }
         }
     }
@@ -240,13 +251,13 @@ export class Room {
         let wallScales: number[] = []
 
         this.makeWallSide(this.minCorner[1], this.maxCorner[1], this.minCorner[0], DivisionDimension.X,
-            3, wallOffsets, wallScales)
+            biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[1], this.maxCorner[1], this.maxCorner[0], DivisionDimension.X,
-            3, wallOffsets, wallScales)
+            biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[0], this.maxCorner[0], this.minCorner[1], DivisionDimension.Z,
-            3, wallOffsets, wallScales)
+            biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.makeWallSide(this.minCorner[0], this.maxCorner[0], this.maxCorner[1], DivisionDimension.Z,
-            3, wallOffsets, wallScales)
+            biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.wallPositions = new Float32Array(wallOffsets)
         this.wallScales = new Float32Array(wallScales)
 

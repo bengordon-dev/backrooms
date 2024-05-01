@@ -159,6 +159,7 @@ export class FloorChunkLoader {
 export class FloorChunk {
     public tiles: number = 0; // Number of tiles that should be *drawn* each frame
     public tilePositionsF32: Float32Array; // (4 x tiles) array of cube translations, in homogeneous coordinates
+    public ceilingPositionsF32: Float32Array;
     public centerX : number; // Center of the chunk
     public centerZ : number;
     private settings: FloorChunkSettings;
@@ -207,6 +208,8 @@ export class FloorChunk {
     private generateRoomsAndWalls() {
         const tree = new RoomTree(this, this.settings, Math.ceil(Math.sqrt(this.length)) * 2)
         this.tilePositionsF32 = mergeFloatArrays(tree.rooms.map(e => e.tilePositionsF32))
+        this.ceilingPositionsF32 = mergeFloatArrays(tree.rooms.map(e => e.ceilingPositionsF32))
+        console.log(this.ceilingPositionsF32)
         this.wallPositions = mergeFloatArrays(tree.rooms.map(e => e.wallPositions))
         this.wallScales = mergeFloatArrays(tree.rooms.map(e => e.wallScales))
         this.tileBiomesF32 = mergeFloatArrays(tree.rooms.map(e => e.tileBiomesF32))

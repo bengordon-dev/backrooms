@@ -14,8 +14,7 @@ export class Tile {
   private normalsF32: Float32Array;
   private uvF32: Float32Array;
 
-  constructor() {
-
+  constructor(above: boolean) {
     this.positionsRay = [
       /* Top */
       new Vec4([-0.5, 0, -0.5, 1.0]),
@@ -34,9 +33,8 @@ export class Tile {
     console.assert(this.positionsF32.length === 4 * 4);
 
     this.indicesRay = [
-      /* Top */
-      new Vec3([0, 1, 2]),
-      new Vec3([0, 2, 3]),
+      new Vec3(above ? [0, 2, 1] : [0, 1, 2]),
+      new Vec3(above ? [0, 3, 2] : [0, 2, 3]),
     ];
     console.assert(this.indicesRay != null);
     console.assert(this.indicesRay.length === 2);
@@ -47,12 +45,13 @@ export class Tile {
     console.assert(this.indicesU32 != null);
     console.assert(this.indicesU32.length === 2 * 3);
 
+    const normalDir = above ? -1.0 : 1.0
     this.normalsRay = [
       /* Top */
-      new Vec4([0.0, 1.0, 0.0, 0.0]),
-      new Vec4([0.0, 1.0, 0.0, 0.0]),
-      new Vec4([0.0, 1.0, 0.0, 0.0]),
-      new Vec4([0.0, 1.0, 0.0, 0.0]),
+      new Vec4([0.0, normalDir, 0.0, 0.0]),
+      new Vec4([0.0, normalDir, 0.0, 0.0]),
+      new Vec4([0.0, normalDir, 0.0, 0.0]),
+      new Vec4([0.0, normalDir, 0.0, 0.0]),
     ];
     console.assert(this.normalsRay != null);
     console.assert(this.normalsRay.length === 4);

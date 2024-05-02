@@ -149,7 +149,7 @@ export const blankCubeFSText = `
         float perlinVal = perlinOctave(xy, 0.0);
         vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
         if (mod(x, 16.0) < 2.0) {
-            kd = vec3(0.0, 0.35, 0.9);
+            kd = vec3(0.0, 0.39, 0.9);
             return vec4(kd*(0.6 + noise*0.4), 1.0);
         }
         return vec4(kd*(0.75 + noise*0.1), 1.0);
@@ -345,21 +345,37 @@ export const blankTileFSText = `
 
     vec4 schoolHallway() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
-        float xFrac = mod(xz.x, 2.0);
-        float yFrac = mod(xz.y, 2.0);
-        if (xFrac < 0.2 || yFrac < 0.2) {
-            xFrac = abs(0.1 - xFrac);
-            yFrac = abs(0.1 - yFrac);
-            if (xFrac < 0.05 || yFrac < 0.05) {
-                return vec4(0.5, 0.5, 0.5, 1.0);
-            } else if (xFrac < 0.075 || yFrac < 0.075) {
-                return vec4(0.6, 0.6, 0.6, 1.0);
+        float xFrac = abs(1.0 - mod(xz.x, 2.0));
+        float yFrac = abs(1.0 - mod(xz.y, 2.0));
+
+        float xTileIndex = floor(mod(xz.x, 16.0) / 2.0);
+        float zTileIndex = floor(mod(xz.y, 16.0) / 2.0);
+        float xi = abs(xTileIndex - 4.0);
+        float zi = abs(zTileIndex - 4.0);
+        float xDiamondIndex = floor(mod(xz.x + 8.0, 32.0) / 16.0);
+        float zDiamondIndex = floor(mod(xz.y + 8.0, 32.0) / 16.0);
+
+        float noise = random(xz, 0.0);
+        float rand = 0.5 + 0.2 * noise;
+        vec3 kd = vec3(rand, rand, rand);
+
+        if ((xi + zi == 5.0) && (xDiamondIndex != zDiamondIndex)) {
+            kd = vec3(0.0, 0.39, 0.9);
+            kd *= (0.75 + 0.25 * noise);
+        } 
+        
+        if (xFrac > 0.9 || yFrac > 0.9) {
+            vec3 stripe = vec3(0.5, 0.5, 0.5);
+            if (xFrac > 0.95 || yFrac > 0.95) {
+                return vec4(stripe, 1.0);
+            } else if (xFrac > 0.925 || yFrac > 0.925) {
+                return vec4((stripe * 0.5) + (kd * 0.5), 1.0);
             } else {
-                return vec4(0.65, 0.65, 0.65, 1.0);
+                return vec4((stripe * 0.33) + (kd * 0.67), 1.0);
             }
-        }
-        float rand = 0.5 + 0.2 * random(xz, 0.0);
-        return vec4(rand, rand, rand, 1.0); 
+        } else {
+            return vec4(kd, 1.0); 
+        }  
     }
 
     void main() {
@@ -482,7 +498,7 @@ export const ceilingFSText = `
 
     vec4 schoolHallway() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
-        if (mod(wsPos.x, 2.0) < 0.1 || mod(wsPos.z, 4.0) < 0.1) {
+        if (abs(1.0 - mod(wsPos.x, 2.0)) > 0.95 || abs(2.0 - mod(wsPos.z, 4.0)) > 1.95) {
             // Stripes
             return vec4(0.46, 0.46, 0.46, 1.0);
         } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 4.0) {

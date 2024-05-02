@@ -11,6 +11,7 @@ import {
   blankTileVSText,
   ceilingFSText
 } from "./Shaders.js";
+import { SkinningAnimation } from "./skinning-utils/SkinningApp.js";
 import { Mat4, Vec4, Vec3, Vec2 } from "../lib/TSM.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
 import { Camera } from "../lib/webglutils/Camera.js";
@@ -349,6 +350,10 @@ export class BackroomsAnimation extends CanvasAnimation {
 export function initializeCanvas(): void {
   const canvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   /* Start drawing */
-  const canvasAnimation: BackroomsAnimation = new BackroomsAnimation(canvas);
-  canvasAnimation.start();
+  const paintingAnimation: SkinningAnimation = new SkinningAnimation(canvas);
+  paintingAnimation.start();
+  paintingAnimation.setScene("./assets/skinning/head.dae");
+  //const canvasAnimation: BackroomsAnimation = new BackroomsAnimation(canvas);
+  //canvasAnimation.start();
 }
+

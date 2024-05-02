@@ -53,6 +53,8 @@ export class BackroomsAnimation extends CanvasAnimation {
   public upVelocity: number; // gravity/jumping
   public onFloor: boolean
 
+  private time = 0;
+
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
 
@@ -131,6 +133,16 @@ export class BackroomsAnimation extends CanvasAnimation {
       geometry.uvFlat()
     );
 
+    renderPass.addAttribute("time",
+      1,
+      this.ctx.FLOAT,
+      false,
+      Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array([this.time])
+    )
+
     renderPass.addInstancedAttribute("aOffset",
       4,
       this.ctx.FLOAT,
@@ -204,6 +216,16 @@ export class BackroomsAnimation extends CanvasAnimation {
       undefined,
       this.wallGeometry.uvFlat()
     );
+
+    this.wallRenderPass.addAttribute("time",
+      1,
+      this.ctx.FLOAT,
+      false,
+      Float32Array.BYTES_PER_ELEMENT,
+      0,
+      undefined,
+      new Float32Array([this.time])
+    )
 
     this.wallRenderPass.addInstancedAttribute("aOffset",
       4,
@@ -280,6 +302,7 @@ export class BackroomsAnimation extends CanvasAnimation {
    *
    */
   public draw(): void {
+    this.time += 1 / 60;
     //TODO: Logic for a rudimentary walking simulator. Check for collisions and reject attempts to walk into a cube. Handle gravity, jumping, and loading of new chunks when necessary.
     let walkDir = this.gui.walkDir()
     if (!this.onFloor) {
@@ -310,18 +333,26 @@ export class BackroomsAnimation extends CanvasAnimation {
     const gl: WebGLRenderingContext = this.ctx;
     gl.viewport(x, y, width, height);
 
+    const time = new Float32Array(27); // random number
+    for (let i = 0; i < time.byteLength; i++) {
+      time[i] = this.time;
+    }
+
     // this.blankTileRenderPass.updateAttributeBuffer("aOffset", this.floorChunk.tilePositions());
     // this.blankTileRenderPass.drawInstanced(this.floorChunk.numTiles());
     //TODO: Render multiple chunks around the player, using Perlin noise shaders
     this.floorChunkLoader.getChunks().forEach(chunk => {
       //chunk.rooms.forEach(room => {
+      this.blankTileRenderPass.updateAttributeBuffer("time", time);
       this.blankTileRenderPass.updateAttributeBuffer("aOffset", chunk.tilePositionsF32);
       this.blankTileRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
       this.blankTileRenderPass.drawInstanced(chunk.tiles);
+      this.ceilingRenderPass.updateAttributeBuffer("time", time);
       this.ceilingRenderPass.updateAttributeBuffer("aOffset", chunk.ceilingPositionsF32);
       this.ceilingRenderPass.updateAttributeBuffer("aRoomID", chunk.tileBiomesF32);
       this.ceilingRenderPass.drawInstanced(chunk.tiles);
 
+      this.wallRenderPass.updateAttributeBuffer("time", time);
       this.wallRenderPass.updateAttributeBuffer("aOffset", chunk.wallPositions);
       this.wallRenderPass.updateAttributeBuffer("aScale", chunk.wallScales);
       this.wallRenderPass.updateAttributeBuffer("aBiome", chunk.wallBiomesF32);

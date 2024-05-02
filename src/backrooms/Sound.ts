@@ -28,7 +28,7 @@ export class Sound {
             } else if (biome === 2) {
                 this.disconnect = this.garage();
             } else if (biome === 3) {
-                this.disconnect = this.office();
+                this.disconnect = this.school();
             }
             this.currentBiome = biome;
         }
@@ -142,5 +142,19 @@ export class Sound {
         this.lowPass = new BiquadFilterNode(this.audioContext, { type: 'lowpass' });
         this.brownNoise(this.masterVolume * 4).connect(this.lowPass).connect(this.audioContext.destination);
         return () => this.lowPass.disconnect();
+    }
+
+    school() {
+        const fundamental = this.tone(120, 'sawtooth', this.masterVolume / 2);
+        const harmonic = this.tone(7680, 'sawtooth', this.masterVolume / 8);
+        const noise = this.whiteNoise(this.masterVolume / 8);
+        fundamental.connect(this.audioContext.destination);
+        harmonic.connect(this.audioContext.destination);
+        noise.connect(this.audioContext.destination);
+        return () => {
+            fundamental.disconnect();
+            harmonic.disconnect();
+            noise.disconnect();
+        };
     }
 }

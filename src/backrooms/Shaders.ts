@@ -11,12 +11,14 @@ export const blankCubeVSText = `
     attribute vec4 aScale;
     attribute vec2 aUV;
     attribute float aBiome;
+    attribute float time;
 
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 blockOffset;
     varying float biome;
+    varying float timeVarying;
 
     void main () {
         gl_Position = uProj * uView * (aVertPos * aScale + aOffset);
@@ -25,6 +27,7 @@ export const blankCubeVSText = `
         uv = aUV;
         blockOffset = aOffset;
         biome = aBiome;
+        timeVarying = time;
     }
 `;
 
@@ -38,6 +41,7 @@ export const blankCubeFSText = `
     varying vec2 uv;
     varying vec4 blockOffset;
     varying float biome;
+    varying float timeVarying;
 
     float random (in vec2 pt, in float seed) {
         return fract(sin(seed + dot(pt.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -158,11 +162,22 @@ export const blankCubeFSText = `
     vec4 garage() {
         vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
         if (normal.z != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y), 0.0), 0.04);
+            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y), 0.0), 0.02);
         } else if (normal.x != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y), 0.0), 0.04);
+            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y), 0.0), 0.02);
         }
         base.a = 1.0;
+        // From https://www.shadertoy.com/new
+        vec3 col = 0.5 + 0.5 * cos(timeVarying + wsPos.xyz + vec3(0, 2, 4));
+        if (normal.x != 0.0) {
+            if (mod(wsPos.z, 20.0) < 10.0 && mod(wsPos.y, 15.0) < 0.1) {
+                return vec4(col, 1.0);
+            }
+        } else if (normal.z != 0.0) {
+            if (mod(wsPos.x, 20.0) < 10.0 && mod(wsPos.y, 15.0) < 0.1) {
+                return vec4(col, 1.0);
+            }
+        }
         return base;
     }
 
@@ -201,12 +216,14 @@ export const blankTileVSText = `
     attribute vec4 aOffset;
     attribute vec2 aUV;
     attribute float aRoomID;
+    attribute float time;
 
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 tileOffset;
     varying float roomID;
+    varying float timeVarying;
 
     void main () {
         vec4 scaledVertPos = vec4(aVertPos.x * tileSize, aVertPos.y, aVertPos.z * tileSize, aVertPos.w);
@@ -216,6 +233,7 @@ export const blankTileVSText = `
         uv = aUV;
         tileOffset = aOffset;
         roomID = aRoomID;
+        timeVarying = time;
     }
 `;
 
@@ -230,6 +248,7 @@ export const blankTileFSText = `
     varying vec2 uv;
     varying vec4 tileOffset;
     varying float roomID;
+    varying float timeVarying;
 
     float random (in vec2 pt, in float seed) {
         return fract(sin(seed + dot(pt.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -242,6 +261,32 @@ export const blankTileFSText = `
 
     float smoothmix(float a0, float a1, float w) {
         return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
+    }
+
+    float perlinSeed(vec2 xzCoords, float gridSize, float seed) {
+        vec2 offset = mod(mod(xzCoords, gridSize) + gridSize, gridSize);
+        vec2 fraction = offset/gridSize;
+
+        vec2 topLeft = xzCoords - offset;
+        vec2 topRight = vec2(topLeft.x + gridSize, topLeft.y);
+        vec2 bottomLeft = vec2(topLeft.x, topLeft.y + gridSize);
+        vec2 bottomRight = vec2(topLeft.x + gridSize, topLeft.y + gridSize);
+
+        mat2 rot = mat2(cos(seed), sin(seed), -sin(seed), cos(seed));
+        vec2 tlVec = rot * unit_vec(topLeft, 0.0);
+        vec2 trVec = rot * unit_vec(topRight, 0.0);
+        vec2 blVec = rot * unit_vec(bottomLeft, 0.0);
+        vec2 brVec = rot * unit_vec(bottomRight, 0.0);
+
+        float aDot = dot(xzCoords - bottomLeft, blVec);
+        float bDot = dot(xzCoords - bottomRight, brVec);
+        float cDot = dot(xzCoords - topRight, trVec);
+        float dDot = dot(xzCoords - topLeft, tlVec);
+
+        float bottom = aDot * (1.0 - fraction.x) + bDot * fraction.x; //smoothmix(aDot, bDot, mod(fraction.x, gridSize)/gridSize);
+        float top = dDot * (1.0 - fraction.x) + cDot * fraction.x; //smoothmix(dDot, cDot, mod(fraction.x, gridSize)/gridSize);
+        float mix = top * (1.0 - fraction.y) + bottom * fraction.y;        //smoothmix(bottom, top, mod(fraction.y, gridSize)/gridSize)*0.5 + 0.5;
+        return mix * 0.5 + 0.5;
     }
 
     float perlin(vec2 xzCoords, float gridSize) {
@@ -304,7 +349,8 @@ export const blankTileFSText = `
         vec2 xy = vec2(wsPos.x, wsPos.z);
         float xFrac = fract(xy.x);
         float yFrac = fract(xy.y);
-        vec3 color = vec3(0.8, 0.8, 0.8) + perlin(xy, 0.5) * 0.2;
+        float r = perlinSeed(xy, 0.5, timeVarying);
+        vec3 color = vec3(0.8, 0.8, 0.8);
         if (xFrac < 0.05 || yFrac < 0.05) {
             // Stripes
             color = vec3(0.5, 0.5, 0.5);
@@ -315,7 +361,7 @@ export const blankTileFSText = `
         }
 
         // Base color
-        return vec4(color * vec3(0.7, 0.95, 0.95), 1.0);
+        return vec4(color * vec3(r, 0.95, 0.95), 1.0);
     }
 
     vec4 yellowRoom() {
@@ -328,11 +374,7 @@ export const blankTileFSText = `
 
     vec4 garage() {
         vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
-        if (normal.z != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y)), 0.04);
-        } else if (normal.x != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y)), 0.04);
-        }
+        base *= pow(perlinOctave(vec2(wsPos.x, wsPos.z)), 0.02);
         base.a = 1.0;
         if (mod(wsPos.x, 20.0) < 0.1) {
             return vec4(1.0, 1.0, 0.0, 1.0);
@@ -362,8 +404,8 @@ export const blankTileFSText = `
         if ((xi + zi == 5.0) && (xDiamondIndex != zDiamondIndex)) {
             kd = vec3(0.0, 0.39, 0.9);
             kd *= (0.75 + 0.25 * noise);
-        } 
-        
+        }
+
         if (xFrac > 0.9 || yFrac > 0.9) {
             vec3 stripe = vec3(0.5, 0.5, 0.5);
             if (xFrac > 0.95 || yFrac > 0.95) {
@@ -374,8 +416,8 @@ export const blankTileFSText = `
                 return vec4((stripe * 0.33) + (kd * 0.67), 1.0);
             }
         } else {
-            return vec4(kd, 1.0); 
-        }  
+            return vec4(kd, 1.0);
+        }
     }
 
     void main() {
@@ -396,12 +438,12 @@ export const ceilingFSText = `
 
     uniform vec4 uLightPos;
 
-
     varying vec4 normal;
     varying vec4 wsPos;
     varying vec2 uv;
     varying vec4 tileOffset;
     varying float roomID;
+    varying float timeVarying;
 
     float random (in vec2 pt, in float seed) {
         return fract(sin(seed + dot(pt.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -460,7 +502,14 @@ export const ceilingFSText = `
             return vec4(0.59, 0.56, 0.25, 1.0);
         } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 2.0) {
             // Lights
-            return vec4(1.0, 1.0, 1.0, 1.0);
+            float atten = 2.0 - sqrt(pow(mod(wsPos.x, 8.0) - 1.1, 2.0) + pow(mod(wsPos.z, 8.0) - 1.1, 2.0));
+            atten = clamp(atten, 0.5, 1.0);
+            vec2 lightPos = vec2(floor(wsPos.x / 8.0), floor(wsPos.z / 8.0));
+            float r = random(lightPos, 0.0);
+            if (r < 0.1 && random(lightPos, timeVarying) < 0.001) {
+                return vec4(0.0, 0.0, 0.0, 1.0);
+            }
+            return vec4(atten, atten, atten, 1.0);
         } else {
             // Base color
             vec4 color = vec4(0.84, 0.84, 0.49, 1.0);
@@ -471,8 +520,12 @@ export const ceilingFSText = `
     }
 
     vec4 garage() {
-        if (mod(wsPos.x, 0.5) < 0.1 && mod(wsPos.z, 0.5) < 0.1) {
-            return vec4(1.0, 1.0, 1.0, 1.0);
+        if (sqrt(pow(mod(wsPos.x, 16.0) - 4.0, 2.0) + pow(mod(wsPos.z, 16.0) - 4.0, 2.0)) < 3.0) {
+            vec2 pos = vec2(floor(wsPos.x / 16.0), floor(wsPos.z / 16.0));
+            if (mod(atan(mod(wsPos.x, 16.0) - 4.0, mod(wsPos.z, 16.0) - 4.0) + random(pos, 0.0) + timeVarying, 3.14 / 2.5) < 0.1) {
+                return vec4(0.5, 0.5, 0.5, 1.0);
+            }
+            return vec4(0.2, 0.2, 0.2, 1.0);
         }
         return vec4(0.6, 0.6, 0.6, 1.0);
     }

@@ -45,6 +45,8 @@ export class BackroomsAnimation extends CanvasAnimation {
 
   private canvas2d: HTMLCanvasElement;
 
+  private sound: Sound;
+
   // Player's head position in world coordinate.
   // Player should extend two units down from this location, and 0.4 units radially.
   private playerPosition: Vec3;
@@ -86,7 +88,7 @@ export class BackroomsAnimation extends CanvasAnimation {
     this.lightPosition = new Vec4([-1000, 1000, -1000, 1]);
     this.backgroundColor = new Vec4([0.0, 0.37254903, 0.37254903, 1.0]);
 
-    new Sound(0.01);
+    this.sound = new Sound(0.01);
   }
 
   /**
@@ -301,6 +303,7 @@ export class BackroomsAnimation extends CanvasAnimation {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); // null is the default frame buffer
     this.drawScene(0, 0, 1280, 960);
+    this.sound.update(this.floorChunkLoader.getCurrentBiome(this.playerPosition.x, this.playerPosition.z));
   }
 
   private drawScene(x: number, y: number, width: number, height: number): void {

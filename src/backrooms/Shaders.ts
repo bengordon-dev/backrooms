@@ -162,9 +162,11 @@ export const blankCubeFSText = `
     vec4 garage() {
         vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
         if (normal.z != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.x, wsPos.y), 0.0), 0.02);
+            base *= (0.8 + 0.2 * perlinOctave(vec2(wsPos.x, wsPos.y), 0.0));
         } else if (normal.x != 0.0) {
-            base *= pow(perlinOctave(vec2(wsPos.z, wsPos.y), 0.0), 0.02);
+            base *= (0.8 + 0.2 * perlinOctave(vec2(wsPos.z, wsPos.y), 0.0));
+        } else if (normal.y != 0.0) {
+            base *= (0.8 + 0.2 * perlinOctave(vec2(wsPos.z, wsPos.z), 0.0));
         }
         base.a = 1.0;
         // From https://www.shadertoy.com/new
@@ -374,7 +376,7 @@ export const blankTileFSText = `
 
     vec4 garage() {
         vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
-        base *= pow(perlinOctave(vec2(wsPos.x, wsPos.z)), 0.02);
+        base *= (0.8 + 0.2 * perlinOctave(vec2(wsPos.x, wsPos.z)));
         base.a = 1.0;
         if (mod(wsPos.x, 20.0) < 0.1) {
             return vec4(1.0, 1.0, 0.0, 1.0);
@@ -527,7 +529,9 @@ export const ceilingFSText = `
             }
             return vec4(0.2, 0.2, 0.2, 1.0);
         }
-        return vec4(0.6, 0.6, 0.6, 1.0);
+        vec3 base = vec3(0.6, 0.6, 0.6);
+        base *= (0.8 + 0.2 * perlinOctave(vec2(wsPos.x, wsPos.z)));
+        return vec4(base, 1.0);
     }
 
     vec4 perlinRoom() {

@@ -138,7 +138,23 @@ export const blankCubeFSText = `
         color += perlin(xy, 0.5, 0.0) * 0.2;
         return vec4(color, 1.0);
     }
-    
+
+    vec4 schoolHallway() {
+        float x = wsPos.z;
+        if (normal.z != 0.0) {
+            x = wsPos.x;
+        }
+        vec2 xy = vec2(x, wsPos.y);
+        vec3 kd = vec3(1.0, 1.0, 1.0);
+        float perlinVal = perlinOctave(xy, 0.0);
+        vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
+        if (mod(x, 16.0) < 2.0) {
+            kd = vec3(0.0, 0.35, 0.9);
+            return vec4(kd*(0.6 + noise*0.4), 1.0);
+        }
+        return vec4(kd*(0.75 + noise*0.1), 1.0);
+    }
+
     vec4 garage() {
         vec4 base = vec4(0.6, 0.6, 0.6, 1.0);
         if (normal.z != 0.0) {
@@ -151,16 +167,6 @@ export const blankCubeFSText = `
     }
 
     void main() {
-        // float seed = random(blockID(), 0.0);
-        // float perlinVal = perlinOctave(uv, seed);
-        // vec3 kd = vec3(0.9, 0.9, 0.9);
-        // if (biome == 3.0) {
-        //     kd = vec3(1.0, 1.0, 1.0);
-        // } else if (biome == 1.0) {
-        //     kd = vec3(0.0, 1.0, 0.0);
-        // } else if (biome == 0.0) {
-        //     kd = vec3(0.8368627451, 0.6980392156862745, 0.5521568627);
-        // }
         // vec3 ka = vec3(0.1, 0.1, 0.1);
         // vec3 noise = vec3(perlinVal, perlinVal, perlinVal);
 
@@ -170,7 +176,7 @@ export const blankCubeFSText = `
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
 
         if (biome == 3.0) {
-            gl_FragColor = vec4(0.7, 0.0, 0.7, 1.0);
+            gl_FragColor = schoolHallway();
         } else if (biome == 2.0) {
             gl_FragColor = garage();
         } else if (biome == 1.0) {
@@ -337,9 +343,28 @@ export const blankTileFSText = `
         return base;
     }
 
+    vec4 schoolHallway() {
+        vec2 xz = vec2(wsPos.x, wsPos.z);
+        float xFrac = mod(xz.x, 2.0);
+        float yFrac = mod(xz.y, 2.0);
+        if (xFrac < 0.2 || yFrac < 0.2) {
+            xFrac = abs(0.1 - xFrac);
+            yFrac = abs(0.1 - yFrac);
+            if (xFrac < 0.05 || yFrac < 0.05) {
+                return vec4(0.5, 0.5, 0.5, 1.0);
+            } else if (xFrac < 0.075 || yFrac < 0.075) {
+                return vec4(0.6, 0.6, 0.6, 1.0);
+            } else {
+                return vec4(0.65, 0.65, 0.65, 1.0);
+            }
+        }
+        float rand = 0.5 + 0.2 * random(xz, 0.0);
+        return vec4(rand, rand, rand, 1.0); 
+    }
+
     void main() {
         if (roomID == 3.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = schoolHallway();
         } else if (roomID == 2.0) {
             gl_FragColor = garage();
         } else if (roomID == 1.0) {
@@ -455,6 +480,24 @@ export const ceilingFSText = `
         return vec4(clamp(ka + dot_nl * kd, 0.0, 1.0)*(0.1 + noise*0.9), 1.0);
     }
 
+    vec4 schoolHallway() {
+        vec2 xz = vec2(wsPos.x, wsPos.z);
+        if (mod(wsPos.x, 2.0) < 0.1 || mod(wsPos.z, 4.0) < 0.1) {
+            // Stripes
+            return vec4(0.46, 0.46, 0.46, 1.0);
+        } else if (mod(wsPos.x, 8.0) < 2.0 && mod(wsPos.z, 8.0) < 4.0) {
+            // Lights
+            float atten = 0.5 + 0.5 * sqrt(1.0 - abs(1.0 - mod(wsPos.x, 8.0)));
+            return vec4(atten, atten, atten, 1.0);
+        } else {
+            // Base color
+            vec4 color = vec4(0.84, 0.84, 0.84, 1.0);
+            color *= pow(perlin(xz, 0.0625), 0.5);
+            color.a = 1.0;
+            return color;
+        }
+    }
+
     vec4 poolRoom() {
         vec2 xz = vec2(wsPos.x, wsPos.z);
         float perlinVal = perlinOctave(xz);
@@ -465,7 +508,7 @@ export const ceilingFSText = `
 
     void main() {
         if (roomID == 3.0) {
-            gl_FragColor = perlinRoom();
+            gl_FragColor = schoolHallway();
         } else if (roomID == 2.0) {
             gl_FragColor = garage();
         } else if (roomID == 1.0) {

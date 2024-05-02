@@ -197,13 +197,10 @@ export class Room {
         const toplefty = this.minCorner[1]
         const width = (this.maxCorner[0] - this.minCorner[0])/this.settings.tileSize
         const height = (this.maxCorner[1] - this.minCorner[1])/this.settings.tileSize
-        // console.log(width)
-        // console.log(height)
         const tiles = width * height
         this.tilePositionsF32 = new Float32Array(tiles * 4);
         this.ceilingPositionsF32 = new Float32Array(tiles * 4);
         this.tileBiomesF32 = new Float32Array(tiles)
-        //console.log(`median ${median} width ${width} height ${height} biome ${biome}`)
         for (let i = 0; i < height; i++) {
             for (let j = 0; j < width; j++) {
                 const idx = width * i + j;
@@ -258,7 +255,6 @@ export class Room {
                 }
             }
         }
-       
     }
 
     private generateWalls() {
@@ -276,7 +272,6 @@ export class Room {
             false, biomeRoomHeights[this.biome], wallOffsets, wallScales)
         this.wallPositions = new Float32Array(wallOffsets)
         this.wallScales = new Float32Array(wallScales)
-
     }
 
     public tilePositions(): Float32Array {

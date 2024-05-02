@@ -36,11 +36,11 @@ export class GUI implements IGUI {
   private width: number;
 
   private animation: BackroomsAnimation;
-  
   private Adown: boolean;
   private Wdown: boolean;
   private Sdown: boolean;
   private Ddown: boolean;
+  canvas: HTMLCanvasElement;
 
   /**
    *
@@ -53,12 +53,10 @@ export class GUI implements IGUI {
     this.prevX = 0;
     this.prevY = 0;
     this.dragging = false;
-    
+    this.canvas = canvas
     this.animation = animation;
-    
     this.reset();
-    
-    this.registerEventListeners(canvas);
+    this.registerEventListeners();
   }
 
   /**
@@ -195,6 +193,16 @@ export class GUI implements IGUI {
     }
   }
   
+  private toggleTeleport(): void {
+    let text = window.prompt("New coordinates:");
+    if (text) {
+      const xz = text.split(",").map(e => Number(e))
+      if (!isNaN(xz[0]) && !isNaN(xz[1])) {
+        this.animation.teleport(xz[0], xz[1])
+      }
+    }
+  }
+
   public onKeyup(key: KeyboardEvent): void {
     switch (key.code) {
       case "KeyW": {
@@ -213,14 +221,18 @@ export class GUI implements IGUI {
         this.Ddown = false;
         break;
       }
+      case "KeyT": {
+        this.toggleTeleport()
+      }
     }
   }  
+
 
   /**
    * Registers all event listeners for the GUI
    * @param canvas The canvas being used
    */
-  private registerEventListeners(canvas: HTMLCanvasElement): void {
+  private registerEventListeners(): void {
     /* Event listener for key controls */
     window.addEventListener("keydown", (key: KeyboardEvent) =>
       this.onKeydown(key)
@@ -231,20 +243,20 @@ export class GUI implements IGUI {
     );
 
     /* Event listener for mouse controls */
-    canvas.addEventListener("mousedown", (mouse: MouseEvent) =>
+    this.canvas.addEventListener("mousedown", (mouse: MouseEvent) =>
       this.dragStart(mouse)
     );
 
-    canvas.addEventListener("mousemove", (mouse: MouseEvent) =>
+    this.canvas.addEventListener("mousemove", (mouse: MouseEvent) =>
       this.drag(mouse)
     );
 
-    canvas.addEventListener("mouseup", (mouse: MouseEvent) =>
+    this.canvas.addEventListener("mouseup", (mouse: MouseEvent) =>
       this.dragEnd(mouse)
     );
     
     /* Event listener to stop the right click menu */
-    canvas.addEventListener("contextmenu", (event: any) =>
+    this.canvas.addEventListener("contextmenu", (event: any) =>
       event.preventDefault()
     );
   }

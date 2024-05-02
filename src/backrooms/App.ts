@@ -23,6 +23,7 @@ const TILE_SIZE: number = 8;
 const JUMP_MAGNITUDE: number = 0.2
 const GRAVITY: number = .0098 * .75
 export const START_HEIGHT: number = 70
+const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: START_HEIGHT}
 
 export class BackroomsAnimation extends CanvasAnimation {
   private gui: GUI;
@@ -70,7 +71,6 @@ export class BackroomsAnimation extends CanvasAnimation {
 
     // Generate initial landscape.
     // chunk size: 64, radius of chunks around player: 2, seed = 55, max height = 75
-    const chunkSettings = {size: 64, tileSize: TILE_SIZE, seed: 0, y: START_HEIGHT}
     this.floorChunkLoader = new FloorChunkLoader(0, 0, chunkSettings)
 
     this.blankTileRenderPass = new RenderPass(gl, blankTileVSText, blankTileFSText);
@@ -374,6 +374,10 @@ export class BackroomsAnimation extends CanvasAnimation {
 
       this.upVelocity += JUMP_MAGNITUDE
     }
+  }
+
+  public teleport(x: number, z: number) {
+    this.playerPosition = new Vec3([x, this.playerPosition.y, z])
   }
 }
 
